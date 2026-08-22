@@ -85,9 +85,18 @@ $app = require_once __DIR__.'/../sipelab-backend/bootstrap/app.php';
 
 ### 1.6 File database siap import
 
-File **`database/sipelab.sql`** (di root project) **sudah berisi hasil `migrate --seed` lengkap**: struktur 8 tabel + akun demo + 5 lab + booking contoh + 1 laporan. **Tidak perlu menjalankan `php artisan migrate` di hosting** — cukup import file ini lewat phpMyAdmin (langkah 1.4).
+Project memiliki **2 file SQL** yang harus di-import secara berurutan:
 
-Untuk membuat ulang dump dari database lokal (misalnya setelah data berubah):
+1. **`database/sipelab.sql`** — struktur dasar 7 tabel + akun demo + 5 lab + booking contoh + 1 laporan.
+2. **`database/sipelab_upgrade.sql`** — tambahan kolom Smart Booking Lab (code, location, status, notifications, dll.).
+
+**Urutan import di phpMyAdmin:**
+1. Import `database/sipelab.sql` (struktur + data awal)
+2. Import `database/sipelab_upgrade.sql` (tambah kolom baru)
+
+**Tidak perlu menjalankan `php artisan migrate` di hosting.**
+
+Untuk membuat ulang dump dari database lokal:
 
 ```bash
 php artisan migrate --seed
@@ -102,6 +111,7 @@ Jalankan perintah berikut (jika hosting menyediakan terminal / SSH):
 php artisan storage:link
 php artisan config:cache
 php artisan route:cache
+php artisan view:cache
 ```
 
 > **Tanpa SSH?** Buat symlink manual: di File Manager, folder `public_html/backend/public/storage` → symlink ke `public_html/backend/storage/app/public`. Atau pastikan hosting panel Anda punya menu "Symlink".
@@ -111,6 +121,28 @@ php artisan route:cache
 ```bash
 chmod -R 775 storage bootstrap/cache
 ```
+
+**Session driver:** `.env` sudah diatur `SESSION_DRIVER=database`. Jika tabel `sessions` belum ada, jalankan:
+
+```bash
+php artisan session:table
+php artisan migrate
+```
+
+> Atau import SQL berikut via phpMyAdmin:
+> ```sql
+> CREATE TABLE `sessions` (
+>   `id` varchar(255) NOT NULL,
+>   `user_id` bigint unsigned DEFAULT NULL,
+>   `ip_address` varchar(45) DEFAULT NULL,
+>   `user_agent` text,
+>   `payload` longtext,
+>   `last_activity` int,
+>   PRIMARY KEY (`id`),
+>   KEY `sessions_user_id_index` (`user_id`),
+>   KEY `sessions_last_activity_index` (`last_activity`)
+> ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+> ```
 
 ---
 
@@ -164,15 +196,42 @@ Kalau ada lebih dari satu origin (www & non-www), pisahkan koma:
 
 ---
 
-## Bagian 3 — Checklist Go-Live
+## Bagian 3 — Automasi Deploy
+
+Jalankan script deploy dari root project:
+
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+Script akan:
+1. Install backend dependencies (production)
+2. Generate APP_KEY
+3. Build frontend
+4. Copy .htaccess ke dist/
+5. Buat ZIP packages di folder `dist/`
+
+**Akun demo (password: `password`):**
+| Email | Role |
+|---|---|
+| `admin@sipelab.test` | Admin |
+| `guru@sipelab.test` | Guru |
+| `siswa@sipelab.test` | Siswa |
+
+## Bagian 4 — Checklist Go-Live
 
 - [ ] `APP_ENV=production` dan `APP_DEBUG=false`
 - [ ] `APP_KEY` sudah di-generate
-- [ ] Database terimport & kredensial `.env` benar
+- [ ] Database `sipelab.sql` **DAN** `sipelab_upgrade.sql` terimport
+- [ ] Kredensial `.env` benar (DB_HOST=localhost, DB_DATABASE, DB_USERNAME, DB_PASSWORD)
+- [ ] `SESSION_DRIVER=database` dan tabel `sessions` sudah ada
 - [ ] `storage/` & `bootstrap/cache` writable (755/775)
 - [ ] Folder `public/storage` tersambung (symlink)
 - [ ] SSL aktif → semua akses via `https://`
+- [ ] CORS: `FRONTEND_URL` sesuai domain frontend
 - [ ] Test login akun demo dari browser
+- [ ] Test buat booking + cek notifikasi
 - [ ] Test upload foto laporan (cek `storage/app/public/reports/`)
 
 ## ⚠️ Troubleshooting Umum
