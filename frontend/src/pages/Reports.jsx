@@ -9,12 +9,12 @@ import EmptyState from '../components/EmptyState'
 import ReportPrintView from '../components/ReportPrintView'
 import StatCard from '../components/StatCard'
 import BarChart from '../components/BarChart'
+import DateRangeFilter from '../components/DateRangeFilter'
 import TrendBadge from '../components/TrendBadge'
 import {
   IconCamera,
   IconChart,
   IconDownload,
-  IconFilter,
   IconFlask,
   IconPlus,
   IconPrinter,
@@ -204,17 +204,12 @@ export default function Reports() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
-              showFilters || filters.date_from || filters.date_to
-                ? 'bg-brand-100 text-brand-700 ring-1 ring-inset ring-brand-200'
-                : 'bg-white text-slate-500 ring-1 ring-inset ring-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            <IconFilter className="h-3.5 w-3.5" />
-            Filter
-          </button>
+          <DateRangeFilter
+            filters={filters}
+            onChange={setFilters}
+            open={showFilters}
+            onToggle={() => setShowFilters(!showFilters)}
+          />
           <a
             href={`/api/export/reports${filters.date_from ? `?date_from=${filters.date_from}` : ''}${filters.date_to ? `${filters.date_from ? '&' : '?'}date_to=${filters.date_to}` : ''}`}
             target="_blank"
@@ -234,40 +229,6 @@ export default function Reports() {
           </button>
         </div>
       </div>
-
-      {/* Date Range Filters */}
-      {showFilters && (
-        <div className="card p-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="label">Dari Tanggal</label>
-              <input
-                type="date"
-                className="input"
-                value={filters.date_from}
-                onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="label">Sampai Tanggal</label>
-              <input
-                type="date"
-                className="input"
-                value={filters.date_to}
-                onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="mt-3 flex justify-end">
-            <button
-              onClick={() => setFilters({ date_from: '', date_to: '' })}
-              className="text-sm font-medium text-slate-500 hover:text-slate-700"
-            >
-              Reset Filter
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Analytics Section */}
       {analyticsLoading ? (

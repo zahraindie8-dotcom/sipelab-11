@@ -8,7 +8,8 @@ import Pagination from '../components/Pagination'
 import Modal from '../components/Modal'
 import BookingDetail from '../components/BookingDetail'
 import EmptyState from '../components/EmptyState'
-import { IconCalendar, IconCheckCircle, IconDownload, IconPlus, IconSearch, IconFilter, IconTrash, IconX } from '../components/icons'
+import DateRangeFilter from '../components/DateRangeFilter'
+import { IconCalendar, IconCheckCircle, IconDownload, IconPlus, IconSearch, IconTrash, IconX } from '../components/icons'
 
 const statusFilters = [
   { value: '', label: 'Semua' },
@@ -185,81 +186,48 @@ export default function Bookings() {
             {f.label}
           </button>
         ))}
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`ml-2 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
-            showFilters || filters.date_from || filters.date_to || filters.lab_id
-              ? 'bg-brand-100 text-brand-700 ring-1 ring-inset ring-brand-200'
-              : 'bg-white text-slate-500 ring-1 ring-inset ring-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          <IconFilter className="h-3.5 w-3.5" />
-          Filter
-        </button>
+        <DateRangeFilter
+          filters={filters}
+          onChange={(f) => { setFilters(f); setPage(1) }}
+          open={showFilters}
+          onToggle={() => setShowFilters(!showFilters)}
+        />
       </div>
 
-      {/* Advanced Filters */}
-      {showFilters && (
+      {/* Advanced Filters (lab & search for approvers) */}
+      {showFilters && isApprover && (
         <div className="card p-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="label">Dari Tanggal</label>
-              <input
-                type="date"
+              <label className="label">Laboratorium</label>
+              <select
                 className="input"
-                value={filters.date_from}
+                value={filters.lab_id}
                 onChange={(e) => {
-                  setFilters({ ...filters, date_from: e.target.value })
+                  setFilters({ ...filters, lab_id: e.target.value })
                   setPage(1)
                 }}
-              />
+              >
+                <option value="">Semua Lab</option>
+                {labs.map((lab) => (
+                  <option key={lab.id} value={lab.id}>
+                    {lab.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
-              <label className="label">Sampai Tanggal</label>
-              <input
-                type="date"
-                className="input"
-                value={filters.date_to}
-                onChange={(e) => {
-                  setFilters({ ...filters, date_to: e.target.value })
-                  setPage(1)
-                }}
-              />
+              <label className="label">Cari</label>
+              <div className="relative">
+                <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  className="input !pl-10"
+                  placeholder="Cari nama user/lab..."
+                  value={filters.search}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                />
+              </div>
             </div>
-            {isApprover && (
-              <>
-                <div>
-                  <label className="label">Laboratorium</label>
-                  <select
-                    className="input"
-                    value={filters.lab_id}
-                    onChange={(e) => {
-                      setFilters({ ...filters, lab_id: e.target.value })
-                      setPage(1)
-                    }}
-                  >
-                    <option value="">Semua Lab</option>
-                    {labs.map((lab) => (
-                      <option key={lab.id} value={lab.id}>
-                        {lab.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="label">Cari</label>
-                  <div className="relative">
-                    <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      className="input !pl-10"
-                      placeholder="Cari nama user/lab..."
-                      value={filters.search}
-                      onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
           </div>
           <div className="mt-3 flex justify-end">
             <button
