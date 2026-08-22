@@ -5,7 +5,8 @@ import { useToast } from '../context/ToastContext'
 import Modal from '../components/Modal'
 import BookingDetail from '../components/BookingDetail'
 import EmptyState from '../components/EmptyState'
-import { IconCheckCircle, IconFilter, IconInbox, IconX } from '../components/icons'
+import DateRangeFilter from '../components/DateRangeFilter'
+import { IconCheckCircle, IconInbox, IconSearch, IconX } from '../components/icons'
 
 export default function Approvals() {
   const { user } = useAuth()
@@ -96,69 +97,29 @@ export default function Approvals() {
         </p>
       </div>
 
-      {/* Filter Toggle */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
-            showFilters || filters.date_from || filters.date_to || filters.lab_id
-              ? 'bg-brand-100 text-brand-700 ring-1 ring-inset ring-brand-200'
-              : 'bg-white text-slate-500 ring-1 ring-inset ring-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          <IconFilter className="h-3.5 w-3.5" />
-          Filter
-        </button>
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-2">
+        <DateRangeFilter
+          filters={filters}
+          onChange={setFilters}
+          open={showFilters}
+          onToggle={() => setShowFilters(!showFilters)}
+        />
+        {labs.length > 0 && (
+          <select
+            className="input !w-auto !py-1.5 !text-sm"
+            value={filters.lab_id}
+            onChange={(e) => setFilters({ ...filters, lab_id: e.target.value })}
+          >
+            <option value="">Semua Lab</option>
+            {labs.map((lab) => (
+              <option key={lab.id} value={lab.id}>
+                {lab.name}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
-
-      {/* Advanced Filters */}
-      {showFilters && (
-        <div className="card p-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-              <label className="label">Dari Tanggal</label>
-              <input
-                type="date"
-                className="input"
-                value={filters.date_from}
-                onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="label">Sampai Tanggal</label>
-              <input
-                type="date"
-                className="input"
-                value={filters.date_to}
-                onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="label">Laboratorium</label>
-              <select
-                className="input"
-                value={filters.lab_id}
-                onChange={(e) => setFilters({ ...filters, lab_id: e.target.value })}
-              >
-                <option value="">Semua Lab</option>
-                {labs.map((lab) => (
-                  <option key={lab.id} value={lab.id}>
-                    {lab.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="mt-3 flex justify-end">
-            <button
-              onClick={() => setFilters({ date_from: '', date_to: '', lab_id: '' })}
-              className="text-sm font-medium text-slate-500 hover:text-slate-700"
-            >
-              Reset Filter
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="card overflow-hidden">
         {loading ? (
