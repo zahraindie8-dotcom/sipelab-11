@@ -5,11 +5,15 @@ import { useToast } from '../context/ToastContext'
 import { extractError } from '../api/client'
 import { IconFlask } from '../components/icons'
 
-const demoAccounts = [
-  { label: 'Admin', email: 'admin@sipelab.test', password: 'password' },
-  { label: 'Guru', email: 'guru@sipelab.test', password: 'password' },
-  { label: 'Siswa', email: 'siswa@sipelab.test', password: 'password' },
-]
+// Demo accounts hanya untuk development
+const isDev = import.meta.env.DEV
+const demoAccounts = isDev
+  ? [
+      { label: 'Admin', email: 'admin@sipelab.test', password: 'password' },
+      { label: 'Guru', email: 'guru@sipelab.test', password: 'password' },
+      { label: 'Siswa', email: 'siswa@sipelab.test', password: 'password' },
+    ]
+  : []
 
 export default function Login() {
   const { login } = useAuth()
@@ -114,24 +118,26 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Akun demo */}
-          <div className="mt-6 border-t border-slate-100 pt-5">
-            <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Akun demo (password: <code>password</code>)
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {demoAccounts.map((acc) => (
-                <button
-                  key={acc.email}
-                  type="button"
-                  onClick={() => fillDemo(acc)}
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-xs font-semibold text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
-                >
-                  {acc.label}
-                </button>
-              ))}
+          {/* Akun demo - hanya di development */}
+          {isDev && demoAccounts.length > 0 && (
+            <div className="mt-6 border-t border-slate-100 pt-5">
+              <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Akun demo (password: <code>password</code>)
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {demoAccounts.map((acc) => (
+                  <button
+                    key={acc.email}
+                    type="button"
+                    onClick={() => fillDemo(acc)}
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-xs font-semibold text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+                  >
+                    {acc.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
