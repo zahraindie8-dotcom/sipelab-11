@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\LabController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ReportAnalyticsController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\WeeklyRecapController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -93,4 +94,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Export — admin & guru bisa export semua, siswa hanya miliknya
     Route::get('/export/bookings', [ExportController::class, 'bookings'])->name('api.export.bookings');
     Route::get('/export/reports', [ExportController::class, 'reports'])->name('api.export.reports');
+
+    // Weekly Recap — hanya admin
+    Route::middleware('role:admin')->group(function () {
+        Route::post('/weekly-recap/send', [WeeklyRecapController::class, 'send'])->name('api.weekly-recap.send');
+        Route::get('/weekly-recap/preview', [WeeklyRecapController::class, 'preview'])->name('api.weekly-recap.preview');
+    });
 });
