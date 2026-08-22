@@ -5,7 +5,7 @@ import { useToast } from '../context/ToastContext'
 import Modal from '../components/Modal'
 import BookingDetail from '../components/BookingDetail'
 import EmptyState from '../components/EmptyState'
-import { IconCheckCircle, IconInbox, IconX } from '../components/icons'
+import { IconCheckCircle, IconFilter, IconInbox, IconX } from '../components/icons'
 
 export default function Approvals() {
   const { user } = useAuth()
@@ -17,24 +17,44 @@ export default function Approvals() {
   const [rejectTarget, setRejectTarget] = useState(null)
   const [reason, setReason] = useState('')
   const [detailTarget, setDetailTarget] = useState(null)
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState({
+    date_from: '',
+    date_to: '',
+    lab_id: '',
+  })
+  const [labs, setLabs] = useState([])
 
   const fetchPending = useCallback(async () => {
     setLoading(true)
     try {
-      const { data } = await client.get('/bookings', {
-        params: { status: 'pending', per_page: 20 },
-      })
+      const params = {
+        status: 'pending',
+        per_page: 20,
+        date_from: filters.date_from || undefined,
+        date_to: filters.date_to || undefined,
+        lab_id: filters.lab_id || undefined,
+      }
+      const { data } = await client.get('/bookings', { params })
       setBookings(data.data)
     } catch (err) {
       toast(extractError(err), 'error')
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [toast, filters])
 
   useEffect(() => {
     fetchPending()
   }, [fetchPending])
+
+  // Fetch labs for filter dropdown
+  useEffect(() => {
+    client
+      .get('/labs', { params: { per_page: 50 } })
+      .then((res) => setLabs(res.data.data))
+      .catch(() => {})
+  }, [])
 
   const approve = async (b) => {
     setProcessing(true)
@@ -75,6 +95,70 @@ export default function Approvals() {
           Antrian booking yang menunggu persetujuan Anda
         </p>
       </div>
+
+      {/* Filter Toggle */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+            showFilters || filters.date_from || filters.date_to || filters.lab_id
+              ? 'bg-brand-100 text-brand-700 ring-1 ring-inset ring-brand-200'
+              : 'bg-white text-slate-500 ring-1 ring-inset ring-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <IconFilter className="h-3.5 w-3.5" />
+          Filter
+        </button>
+      </div>
+
+      {/* Advanced Filters */}
+      {showFilters && (
+        <div className="card p-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label className="label">Dari Tanggal</label>
+              <input
+                type="date"
+                className="input"
+                value={filters.date_from}
+                onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">Sampai Tanggal</label>
+              <input
+                type="date"
+                className="input"
+                value={filters.date_to}
+                onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">Laboratorium</label>
+              <select
+                className="input"
+                value={filters.lab_id}
+                onChange={(e) => setFilters({ ...filters, lab_id: e.target.value })}
+              >
+                <option value="">Semua Lab</option>
+                {labs.map((lab) => (
+                  <option key={lab.id} value={lab.id}>
+                    {lab.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="mt-3 flex justify-end">
+            <button
+              onClick={() => setFilters({ date_from: '', date_to: '', lab_id: '' })}
+              className="text-sm font-medium text-slate-500 hover:text-slate-700"
+            >
+              Reset Filter
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="card overflow-hidden">
         {loading ? (

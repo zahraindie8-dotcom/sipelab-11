@@ -1,12 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import client, { extractError } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import Modal from '../components/Modal'
 import Pagination from '../components/Pagination'
 import StatusBadge from '../components/StatusBadge'
 import EmptyState from '../components/EmptyState'
 import ReportPrintView from '../components/ReportPrintView'
-import { IconCamera, IconPlus, IconPrinter, IconTrash } from '../components/icons'
+import StatCard from '../components/StatCard'
+import BarChart from '../components/BarChart'
+import TrendBadge from '../components/TrendBadge'
+import {
+  IconCamera,
+  IconChart,
+  IconDownload,
+  IconFilter,
+  IconFlask,
+  IconPlus,
+  IconPrinter,
+  IconTrending,
+  IconTrash,
+  IconUsers,
+} from '../components/icons'
 
 function formatDateTime(value) {
   if (!value) return '-'
@@ -20,13 +35,25 @@ function formatDateTime(value) {
 }
 
 export default function Reports() {
+  const { user } = useAuth()
   const { toast } = useToast()
 
+  // Reports list
   const [reports, setReports] = useState([])
   const [meta, setMeta] = useState(null)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
 
+  // Analytics
+  const [analytics, setAnalytics] = useState(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(true)
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState({
+    date_from: '',
+    date_to: '',
+  })
+
+  // Upload modal
   const [uploadOpen, setUploadOpen] = useState(false)
   const [approvedBookings, setApprovedBookings] = useState([])
   const [form, setForm] = useState({ booking_id: '', description: '' })
@@ -34,7 +61,7 @@ export default function Reports() {
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState(null)
 
-  // Cetak
+  // Print
   const [printReports, setPrintReports] = useState(null)
   const [printing, setPrinting] = useState(false)
 
@@ -51,9 +78,29 @@ export default function Reports() {
     }
   }, [page, toast])
 
+  const fetchAnalytics = useCallback(async () => {
+    setAnalyticsLoading(true)
+    try {
+      const params = {
+        date_from: filters.date_from || undefined,
+        date_to: filters.date_to || undefined,
+      }
+      const { data } = await client.get('/reports/analytics', { params })
+      setAnalytics(data)
+    } catch (err) {
+      // Silent fail for analytics
+    } finally {
+      setAnalyticsLoading(false)
+    }
+  }, [filters])
+
   useEffect(() => {
     fetchReports()
   }, [fetchReports])
+
+  useEffect(() => {
+    fetchAnalytics()
+  }, [fetchAnalytics])
 
   const openUpload = async () => {
     setFormError(null)
@@ -88,6 +135,7 @@ export default function Reports() {
       toast('Laporan penggunaan lab berhasil diunggah.')
       setUploadOpen(false)
       fetchReports()
+      fetchAnalytics()
     } catch (err) {
       setFormError(extractError(err))
     } finally {
@@ -101,6 +149,7 @@ export default function Reports() {
       await client.delete(`/reports/${r.id}`)
       toast('Laporan dihapus.')
       fetchReports()
+      fetchAnalytics()
     } catch (err) {
       toast(extractError(err), 'error')
     }
@@ -123,8 +172,30 @@ export default function Reports() {
     }
   }
 
+  // Format analytics data
+  const monthlyChartData = analytics?.monthly_reports?.map((m) => ({
+    label: m.label.split(' ')[0],
+    value: m.total,
+    color: 'bg-brand-500',
+  })) || []
+
+  const labChartData = analytics?.lab_reports
+    ?.filter((l) => l.reports_count > 0)
+    .map((l) => ({
+      label: l.name,
+      value: l.reports_count,
+      color: 'bg-sky-500',
+    })) || []
+
+  const topReportersData = analytics?.top_reporters?.map((r) => ({
+    label: r.name,
+    value: r.total,
+    color: 'bg-emerald-500',
+  })) || []
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-800">Laporan Penggunaan Lab</h1>
@@ -133,6 +204,26 @@ export default function Reports() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+              showFilters || filters.date_from || filters.date_to
+                ? 'bg-brand-100 text-brand-700 ring-1 ring-inset ring-brand-200'
+                : 'bg-white text-slate-500 ring-1 ring-inset ring-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <IconFilter className="h-3.5 w-3.5" />
+            Filter
+          </button>
+          <a
+            href={`/api/export/reports${filters.date_from ? `?date_from=${filters.date_from}` : ''}${filters.date_to ? `${filters.date_from ? '&' : '?'}date_to=${filters.date_to}` : ''}`}
+            target="_blank"
+            rel="noreferrer"
+            className="btn-secondary"
+          >
+            <IconDownload className="h-4 w-4" />
+            Export CSV
+          </a>
           <button onClick={handlePrint} disabled={printing} className="btn-secondary">
             <IconPrinter className="h-4 w-4" />
             {printing ? 'Memuat...' : 'Cetak Laporan'}
@@ -144,6 +235,164 @@ export default function Reports() {
         </div>
       </div>
 
+      {/* Date Range Filters */}
+      {showFilters && (
+        <div className="card p-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">Dari Tanggal</label>
+              <input
+                type="date"
+                className="input"
+                value={filters.date_from}
+                onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">Sampai Tanggal</label>
+              <input
+                type="date"
+                className="input"
+                value={filters.date_to}
+                onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="mt-3 flex justify-end">
+            <button
+              onClick={() => setFilters({ date_from: '', date_to: '' })}
+              className="text-sm font-medium text-slate-500 hover:text-slate-700"
+            >
+              Reset Filter
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Analytics Section */}
+      {analyticsLoading ? (
+        <div className="flex h-32 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-200 border-t-brand-600" />
+        </div>
+      ) : analytics && (
+        <>
+          {/* Stat Cards */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              icon={IconCamera}
+              label="Total Laporan"
+              value={analytics.summary.total_reports}
+              accent="brand"
+              sub="Laporan terunggah"
+              trend={<TrendBadge value={analytics.trends.change} />}
+            />
+            <StatCard
+              icon={IconFlask}
+              label="Booking Disetujui"
+              value={analytics.summary.total_approved}
+              accent="emerald"
+              sub="Siap dilaporkan"
+            />
+            <StatCard
+              icon={IconTrending}
+              label="Tingkat Pelaporan"
+              value={`${analytics.summary.report_rate}%`}
+              accent="sky"
+              sub={`${analytics.summary.total_reports} dari ${analytics.summary.total_approved} booking`}
+            />
+            <StatCard
+              icon={IconUsers}
+              label="Top Pelapor"
+              value={analytics.top_reporters?.[0]?.name ?? '-'}
+              accent="amber"
+              sub={analytics.top_reporters?.[0] ? `${analytics.top_reporters[0].total} laporan` : 'Belum ada data'}
+            />
+          </div>
+
+          {/* Month-over-Month Trends */}
+          <div className="card p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <IconTrending className="h-4 w-4 text-slate-400" />
+              <h2 className="text-sm font-bold text-slate-700">Tren Bulanan Laporan</h2>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="rounded-xl bg-gradient-to-br from-brand-50 to-brand-100/50 p-4">
+                <p className="text-xs font-medium text-brand-600">Bulan Ini</p>
+                <p className="mt-1 text-xs text-brand-500">{analytics.trends.this_month.label}</p>
+                <p className="mt-2 text-2xl font-bold text-brand-700">{analytics.trends.this_month.total}</p>
+                <p className="text-xs text-brand-600">laporan</p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-4">
+                <p className="text-xs font-medium text-slate-500">Bulan Lalu</p>
+                <p className="mt-1 text-xs text-slate-400">{analytics.trends.last_month.label}</p>
+                <p className="mt-2 text-2xl font-bold text-slate-700">{analytics.trends.last_month.total}</p>
+                <p className="text-xs text-slate-500">laporan</p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-4">
+                <p className="text-xs font-medium text-slate-500">Perubahan</p>
+                <p className={`mt-2 text-2xl font-bold ${
+                  analytics.trends.change > 0 ? 'text-emerald-600' : analytics.trends.change < 0 ? 'text-rose-600' : 'text-slate-600'
+                }`}>
+                  {analytics.trends.change > 0 ? '+' : ''}{analytics.trends.change}%
+                </p>
+                <p className="text-xs text-slate-500">vs bulan lalu</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Charts */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* Laporan per Bulan */}
+            <div className="card p-5">
+              <div className="mb-4 flex items-center gap-2">
+                <IconChart className="h-4 w-4 text-slate-400" />
+                <h2 className="text-sm font-bold text-slate-700">Laporan per Bulan</h2>
+              </div>
+              {monthlyChartData.length > 0 ? (
+                <BarChart data={monthlyChartData} height={180} />
+              ) : (
+                <p className="py-8 text-center text-sm text-slate-400">Belum ada data laporan.</p>
+              )}
+            </div>
+
+            {/* Laporan per Lab */}
+            <div className="card p-5">
+              <div className="mb-4 flex items-center gap-2">
+                <IconFlask className="h-4 w-4 text-slate-400" />
+                <h2 className="text-sm font-bold text-slate-700">Laporan per Lab</h2>
+              </div>
+              {labChartData.length > 0 ? (
+                <BarChart
+                  data={labChartData}
+                  orientation="horizontal"
+                  showValues
+                  height={Math.max(labChartData.length * 40, 80)}
+                />
+              ) : (
+                <p className="py-8 text-center text-sm text-slate-400">Belum ada data laporan.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Top Reporters */}
+          {topReportersData.length > 0 && (
+            <div className="card p-5">
+              <div className="mb-4 flex items-center gap-2">
+                <IconUsers className="h-4 w-4 text-slate-400" />
+                <h2 className="text-sm font-bold text-slate-700">Top Pelapor</h2>
+              </div>
+              <BarChart
+                data={topReportersData}
+                orientation="horizontal"
+                showValues
+                height={Math.max(topReportersData.length * 40, 80)}
+              />
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Reports List */}
       <div className="card overflow-hidden">
         {loading ? (
           <div className="flex h-48 items-center justify-center">

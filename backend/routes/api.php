@@ -4,8 +4,10 @@ use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\LabController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\ReportAnalyticsController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -65,14 +67,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Reports
     Route::get('/reports', [ReportController::class, 'index'])->name('api.reports.index');
+    Route::get('/reports/analytics', [ReportAnalyticsController::class, 'index'])->name('api.reports.analytics');
     Route::post('/reports', [ReportController::class, 'store'])->name('api.reports.store');
     Route::delete('/reports/{report}', [ReportController::class, 'destroy'])->name('api.reports.destroy');
     Route::middleware('role:admin,guru')->get('/reports/all', [ReportController::class, 'all'])->name('api.reports.all');
 
-    // Analytics — hanya admin
-    Route::middleware('role:admin')->group(function () {
-        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('api.analytics');
-    });
+    // Analytics — admin, guru, siswa (data di-scoping sesuai role)
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('api.analytics');
 
     // Users — hanya admin
     Route::middleware('role:admin')->group(function () {
@@ -88,4 +89,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('api.notifications.unread-count');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('api.notifications.mark-as-read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('api.notifications.mark-all-as-read');
+
+    // Export — admin & guru bisa export semua, siswa hanya miliknya
+    Route::get('/export/bookings', [ExportController::class, 'bookings'])->name('api.export.bookings');
+    Route::get('/export/reports', [ExportController::class, 'reports'])->name('api.export.reports');
 });

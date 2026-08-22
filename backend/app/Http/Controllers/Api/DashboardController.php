@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Models\Lab;
 use App\Models\Notification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -78,6 +79,23 @@ class DashboardController extends Controller
             ->where('is_read', false)
             ->count();
 
+        // Mini chart data: booking count per day (last 7 days)
+        $dailyBookingsMap = (clone $bookingQuery)
+            ->where('created_at', '>=', now()->subDays(6)->startOfDay())
+            ->select(
+                DB::raw('DATE(created_at) as day'),
+                DB::raw('COUNT(*) as total'),
+            )
+            ->groupBy('day')
+            ->pluck('total', 'day')
+            ->toArray();
+
+        $miniChartData = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $day = now()->subDays($i)->toDateString();
+            $miniChartData[] = (int) ($dailyBookingsMap[$day] ?? 0);
+        }
+
         return response()->json([
             'stats' => [
                 'total_labs' => Lab::count(),
@@ -92,6 +110,7 @@ class DashboardController extends Controller
             'pending_approvals' => BookingResource::collection($pendingApprovals),
             'upcoming_bookings' => BookingResource::collection($upcomingBookings),
             'unread_notifications' => $unreadNotifications,
+            'mini_chart_data' => $miniChartData,
         ]);
     }
 }

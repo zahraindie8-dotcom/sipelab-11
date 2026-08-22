@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import client, { extractError } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import BarChart from '../components/BarChart'
 import StatCard from '../components/StatCard'
@@ -8,6 +9,8 @@ import {
   IconChart,
   IconCheckCircle,
   IconClock,
+  IconDownload,
+  IconFilter,
   IconFlask,
   IconTrending,
   IconUsers,
@@ -29,21 +32,31 @@ const statusLabels = {
 const dayLabels = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
 
 export default function Analytics() {
+  const { user } = useAuth()
   const { toast } = useToast()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState({
+    date_from: '',
+    date_to: '',
+  })
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await client.get('/analytics')
+      const params = {
+        date_from: filters.date_from || undefined,
+        date_to: filters.date_to || undefined,
+      }
+      const res = await client.get('/analytics', { params })
       setData(res.data)
     } catch (err) {
       toast(extractError(err), 'error')
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [toast, filters])
 
   useEffect(() => {
     fetchData()
@@ -59,7 +72,15 @@ export default function Analytics() {
 
   if (!data) return null
 
-  const { summary, monthly_bookings: monthly, lab_usage: labUsage, status_breakdown: statusBreakdown, weekly_bookings: weekly, peak_hours: peakHours } = data
+  const {
+    summary,
+    monthly_bookings: monthly,
+    lab_usage: labUsage,
+    status_breakdown: statusBreakdown,
+    weekly_bookings: weekly,
+    peak_hours: peakHours,
+    trends,
+  } = data
 
   // Format data untuk chart booking per bulan
   const monthlyChartData = monthly.map((m) => ({
@@ -96,15 +117,79 @@ export default function Analytics() {
     color: 'bg-amber-500',
   }))
 
+  // Role-aware labels
+  const pageLabels = {
+    admin: { title: 'Statistik & Analitik', subtitle: 'Insight penggunaan lab sekolah berdasarkan data booking' },
+    guru: { title: 'Statistik & Analitik', subtitle: 'Insight penggunaan lab berdasarkan data booking' },
+    siswa: { title: 'Statistik Saya', subtitle: 'Ringkasan aktivitas booking pribadi Anda' },
+  }
+  const labels = pageLabels[user?.role] ?? pageLabels.siswa
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-slate-800">Statistik & Analitik</h1>
-        <p className="text-sm text-slate-500">
-          Insight penggunaan lab sekolah berdasarkan data booking
-        </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">{labels.title}</h1>
+          <p className="text-sm text-slate-500">{labels.subtitle}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+              showFilters || filters.date_from || filters.date_to
+                ? 'bg-brand-100 text-brand-700 ring-1 ring-inset ring-brand-200'
+                : 'bg-white text-slate-500 ring-1 ring-inset ring-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <IconFilter className="h-3.5 w-3.5" />
+            Filter
+          </button>
+          <a
+            href={`/api/export/bookings${filters.date_from ? `?date_from=${filters.date_from}` : ''}${filters.date_to ? `${filters.date_from ? '&' : '?'}date_to=${filters.date_to}` : ''}`}
+            target="_blank"
+            rel="noreferrer"
+            className="btn-secondary"
+          >
+            <IconDownload className="h-4 w-4" />
+            Export CSV
+          </a>
+        </div>
       </div>
+
+      {/* Date Range Filters */}
+      {showFilters && (
+        <div className="card p-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">Dari Tanggal</label>
+              <input
+                type="date"
+                className="input"
+                value={filters.date_from}
+                onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">Sampai Tanggal</label>
+              <input
+                type="date"
+                className="input"
+                value={filters.date_to}
+                onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="mt-3 flex justify-end">
+            <button
+              onClick={() => setFilters({ date_from: '', date_to: '' })}
+              className="text-sm font-medium text-slate-500 hover:text-slate-700"
+            >
+              Reset Filter
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Ringkasan */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -137,6 +222,52 @@ export default function Analytics() {
           sub="Approval rate"
         />
       </div>
+
+      {/* Month-over-Month Trends */}
+      {trends && (
+        <div className="card p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <IconTrending className="h-4 w-4 text-slate-400" />
+            <h2 className="text-sm font-bold text-slate-700">Tren Bulanan</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* This Month */}
+            <div className="rounded-xl bg-gradient-to-br from-brand-50 to-brand-100/50 p-4">
+              <p className="text-xs font-medium text-brand-600">Bulan Ini</p>
+              <p className="mt-1 text-xs text-brand-500">{trends.this_month.label}</p>
+              <p className="mt-2 text-2xl font-bold text-brand-700">{trends.this_month.total}</p>
+              <p className="text-xs text-brand-600">total booking</p>
+            </div>
+            {/* Last Month */}
+            <div className="rounded-xl bg-slate-50 p-4">
+              <p className="text-xs font-medium text-slate-500">Bulan Lalu</p>
+              <p className="mt-1 text-xs text-slate-400">{trends.last_month.label}</p>
+              <p className="mt-2 text-2xl font-bold text-slate-700">{trends.last_month.total}</p>
+              <p className="text-xs text-slate-500">total booking</p>
+            </div>
+            {/* Total Change */}
+            <div className="rounded-xl bg-slate-50 p-4">
+              <p className="text-xs font-medium text-slate-500">Perubahan Total</p>
+              <p className={`mt-2 text-2xl font-bold ${
+                trends.total_change > 0 ? 'text-emerald-600' : trends.total_change < 0 ? 'text-rose-600' : 'text-slate-600'
+              }`}>
+                {trends.total_change > 0 ? '+' : ''}{trends.total_change}%
+              </p>
+              <p className="text-xs text-slate-500">vs bulan lalu</p>
+            </div>
+            {/* Approved Change */}
+            <div className="rounded-xl bg-slate-50 p-4">
+              <p className="text-xs font-medium text-slate-500">Perubahan Disetujui</p>
+              <p className={`mt-2 text-2xl font-bold ${
+                trends.approved_change > 0 ? 'text-emerald-600' : trends.approved_change < 0 ? 'text-rose-600' : 'text-slate-600'
+              }`}>
+                {trends.approved_change > 0 ? '+' : ''}{trends.approved_change}%
+              </p>
+              <p className="text-xs text-slate-500">vs bulan lalu</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Grafik Booking per Bulan */}
       <div className="card p-5">

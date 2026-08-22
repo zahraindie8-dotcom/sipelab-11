@@ -12,19 +12,31 @@ use Illuminate\Support\Facades\DB;
 class AnalyticsController extends Controller
 {
     /**
-     * Data analitik untuk admin:
-     * - Booking per bulan (12 bulan terakhir)
-     * - Penggunaan lab (jumlah booking disetujui per lab)
-     * - Status breakdown (pending / approved / rejected)
-     * - Booking per hari dalam minggu ini
-     * - Jam tersibuk
+     * Data analitik — accessible by admin, guru, and siswa (role-scoped).
+     *
+     * Query params:
+     * - date_from: filter start date (created_at >=)
+     * - date_to: filter end date (created_at <=)
+     * - months: number of months for monthly chart (default 12)
      */
     public function index(Request $request)
     {
+        $user = $request->user();
+        $months = (int) $request->query('months', 12);
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
+
+        // Base query scoped by role
+        $baseQuery = Booking::query()
+            ->when(! $user->canApprove(), fn ($q) => $q->where('user_id', $user->id))
+            ->when($dateFrom, fn ($q) => $q->where('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->where('created_at', '<=', $dateTo . ' 23:59:59'));
+
         // ============================================================
-        // 1. Booking per bulan (12 bulan terakhir)
+        // 1. Booking per bulan (N bulan terakhir)
         // ============================================================
-        $monthlyBookings = Booking::where('created_at', '>=', now()->subMonths(11)->startOfMonth())
+        $monthlyBookings = (clone $baseQuery)
+            ->where('created_at', '>=', now()->subMonths($months - 1)->startOfMonth())
             ->select(
                 DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
                 DB::raw('COUNT(*) as total'),
@@ -54,9 +66,18 @@ class AnalyticsController extends Controller
         // ============================================================
         // 2. Penggunaan lab (jumlah booking disetujui per lab)
         // ============================================================
-        $labUsage = Lab::withCount([
-            'bookings as approved_count' => fn ($q) => $q->where('status', Booking::STATUS_APPROVED),
-            'bookings as total_count',
+        $labQuery = Lab::query()
+            ->when(! $user->canApprove(), function ($q) use ($user) {
+                $q->whereHas('bookings', fn ($bq) => $bq->where('user_id', $user->id));
+            });
+
+        $labUsage = (clone $labQuery)->withCount([
+            'bookings as approved_count' => fn ($q) => $q->where('status', Booking::STATUS_APPROVED)
+                ->when($dateFrom, fn ($q) => $q->where('created_at', '>=', $dateFrom))
+                ->when($dateTo, fn ($q) => $q->where('created_at', '<=', $dateTo . ' 23:59:59')),
+            'bookings as total_count' => fn ($q) => $q
+                ->when($dateFrom, fn ($q) => $q->where('created_at', '>=', $dateFrom))
+                ->when($dateTo, fn ($q) => $q->where('created_at', '<=', $dateTo . ' 23:59:59')),
         ])->orderByDesc('approved_count')->get()->map(fn ($lab) => [
             'id' => $lab->id,
             'name' => $lab->name,
@@ -68,7 +89,8 @@ class AnalyticsController extends Controller
         // ============================================================
         // 3. Status breakdown
         // ============================================================
-        $statusBreakdown = Booking::select('status', DB::raw('COUNT(*) as count'))
+        $statusBreakdown = (clone $baseQuery)
+            ->select('status', DB::raw('COUNT(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
@@ -76,20 +98,21 @@ class AnalyticsController extends Controller
         // ============================================================
         // 4. Booking per hari dalam minggu ini
         // ============================================================
-        $weeklyBookings = Booking::whereBetween('date', [
-            now()->startOfWeek()->toDateString(),
-            now()->endOfWeek()->toDateString(),
-        ])->select(
-            DB::raw('DAYOFWEEK(date) as day_of_week'),
-            DB::raw('COUNT(*) as total'),
-        )->groupBy('day_of_week')
+        $weeklyBookings = (clone $baseQuery)
+            ->whereBetween('date', [
+                now()->startOfWeek()->toDateString(),
+                now()->endOfWeek()->toDateString(),
+            ])->select(
+                DB::raw('DAYOFWEEK(date) as day_of_week'),
+                DB::raw('COUNT(*) as total'),
+            )->groupBy('day_of_week')
             ->get()
             ->mapWithKeys(fn ($row) => [$row['day_of_week'] => (int) $row['total']]);
 
         // ============================================================
         // 5. Jam tersibuk (jam yang paling banyak booking)
         // ============================================================
-        $peakHours = Booking::select(
+        $peakHours = (clone $baseQuery)->select(
             DB::raw('HOUR(start_time) as hour'),
             DB::raw('COUNT(*) as total'),
         )->groupBy('hour')
@@ -102,10 +125,49 @@ class AnalyticsController extends Controller
             ]);
 
         // ============================================================
-        // 6. Ringkasan
+        // 6. Month-over-Month Trends
         // ============================================================
-        $totalBookings = Booking::count();
-        $totalApproved = Booking::where('status', Booking::STATUS_APPROVED)->count();
+        $thisMonthStart = now()->startOfMonth();
+        $lastMonthStart = now()->subMonth()->startOfMonth();
+        $lastMonthEnd = now()->subMonth()->endOfMonth();
+
+        $thisMonthQuery = (clone $baseQuery)
+            ->where('created_at', '>=', $thisMonthStart)
+            ->where('created_at', '<=', now());
+        $lastMonthQuery = Booking::query()
+            ->when(! $user->canApprove(), fn ($q) => $q->where('user_id', $user->id))
+            ->where('created_at', '>=', $lastMonthStart)
+            ->where('created_at', '<=', $lastMonthEnd);
+
+        $thisMonthTotal = (clone $thisMonthQuery)->count();
+        $lastMonthTotal = (clone $lastMonthQuery)->count();
+        $thisMonthApproved = (clone $thisMonthQuery)->where('status', Booking::STATUS_APPROVED)->count();
+        $lastMonthApproved = (clone $lastMonthQuery)->where('status', Booking::STATUS_APPROVED)->count();
+
+        $trends = [
+            'this_month' => [
+                'label' => now()->locale('id')->isoFormat('MMMM YYYY'),
+                'total' => $thisMonthTotal,
+                'approved' => $thisMonthApproved,
+            ],
+            'last_month' => [
+                'label' => now()->subMonth()->locale('id')->isoFormat('MMMM YYYY'),
+                'total' => $lastMonthTotal,
+                'approved' => $lastMonthApproved,
+            ],
+            'total_change' => $lastMonthTotal > 0
+                ? round((($thisMonthTotal - $lastMonthTotal) / $lastMonthTotal) * 100, 1)
+                : ($thisMonthTotal > 0 ? 100.0 : 0.0),
+            'approved_change' => $lastMonthApproved > 0
+                ? round((($thisMonthApproved - $lastMonthApproved) / $lastMonthApproved) * 100, 1)
+                : ($thisMonthApproved > 0 ? 100.0 : 0.0),
+        ];
+
+        // ============================================================
+        // 7. Ringkasan
+        // ============================================================
+        $totalBookings = (clone $baseQuery)->count();
+        $totalApproved = (clone $baseQuery)->where('status', Booking::STATUS_APPROVED)->count();
         $totalLabs = Lab::count();
 
         return response()->json([
@@ -126,6 +188,7 @@ class AnalyticsController extends Controller
             ],
             'weekly_bookings' => $weeklyBookings,
             'peak_hours' => $peakHours,
+            'trends' => $trends,
         ]);
     }
 }

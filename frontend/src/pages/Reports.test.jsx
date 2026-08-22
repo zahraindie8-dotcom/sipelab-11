@@ -34,6 +34,21 @@ function mockApi() {
     if (url === '/bookings') {
       return Promise.resolve({ data: { data: [approvedBooking] } })
     }
+    if (url === '/reports/analytics') {
+      return Promise.resolve({
+        data: {
+          summary: { total_reports: 0, total_bookings: 0, total_approved: 0, reports_with_photos: 0, report_rate: 0 },
+          monthly_reports: [],
+          lab_reports: [],
+          top_reporters: [],
+          trends: {
+            this_month: { label: 'Agustus 2026', total: 0 },
+            last_month: { label: 'Juli 2026', total: 0 },
+            change: 0,
+          },
+        },
+      })
+    }
     // Daftar laporan kosong.
     return Promise.resolve({
       data: { data: [], meta: { current_page: 1, last_page: 1, total: 0 } },

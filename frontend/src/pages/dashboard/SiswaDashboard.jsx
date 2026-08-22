@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import StatCard from '../../components/StatCard'
+import MiniBarChart from '../../components/MiniBarChart'
 import StatusBadge from '../../components/StatusBadge'
 import EmptyState from '../../components/EmptyState'
 import {
@@ -18,7 +19,7 @@ import { ActivityList, BookNowButton } from './parts'
  * datang, dan aktivitas terbaru.
  */
 export default function SiswaDashboard({ data, user }) {
-  const { stats, recent_bookings: recentBookings, upcoming_bookings: upcomingBookings } = data
+  const { stats, recent_bookings: recentBookings, upcoming_bookings: upcomingBookings, mini_chart_data: miniChartData } = data
   const firstName = user?.name?.split(' ')[0] ?? 'Siswa'
 
   return (
@@ -54,6 +55,7 @@ export default function SiswaDashboard({ data, user }) {
           value={stats.total_bookings}
           accent="brand"
           sub="Total booking Anda"
+          miniChart={<MiniBarChart data={miniChartData} color="bg-brand-400" />}
         />
         <StatCard
           icon={IconCheckCircle}
@@ -61,6 +63,7 @@ export default function SiswaDashboard({ data, user }) {
           value={stats.approved}
           accent="emerald"
           sub="Siap dipakai"
+          miniChart={<MiniBarChart data={miniChartData} color="bg-emerald-400" />}
         />
         <StatCard
           icon={IconClock}

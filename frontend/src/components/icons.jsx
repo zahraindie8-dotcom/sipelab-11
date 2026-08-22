@@ -158,3 +158,16 @@ export const IconChevronRight = (p) => (
     <path d="m9 18 6-6-6-6" />
   </svg>
 )
+
+export const IconFilter = (p) => (
+  <svg {...base} {...p}>
+    <path d="M3 4h18l-7 8.5V18l-4 2V12.5z" />
+  </svg>
+)
+
+export const IconDownload = (p) => (
+  <svg {...base} {...p}>
+    <path d="M12 3v12M8 11l4 4 4-4" />
+    <path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" />
+  </svg>
+)

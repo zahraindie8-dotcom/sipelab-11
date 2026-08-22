@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
 use App\Http\Resources\BookingResource;
+use App\Mail\BookingNotification;
 use App\Models\Booking;
 use App\Models\Lab;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class BookingController extends Controller
 {
@@ -41,6 +43,9 @@ class BookingController extends Controller
             })
             ->when($request->query('date_to'), function ($q, $dateTo) {
                 $q->where('date', '<=', $dateTo);
+            })
+            ->when($request->query('user_id') && $request->user()->canApprove(), function ($q, $userId) {
+                $q->where('user_id', $userId);
             })
             ->latest();
 
@@ -252,6 +257,9 @@ class BookingController extends Controller
             'booking_id' => $booking->id,
         ]);
 
+        // Kirim email notifikasi ke pemesan
+        $this->sendBookingEmail($booking, 'approved', "Booking telah disetujui oleh {$request->user()->name}.");
+
         return response()->json([
             'message' => 'Booking disetujui.',
             'data' => new BookingResource($booking->fresh(['user', 'lab', 'approver', 'report'])),
@@ -287,6 +295,9 @@ class BookingController extends Controller
             'message' => "Booking lab {$booking->lab->name} pada {$booking->date} ({$booking->start_time}-{$booking->end_time}) ditolak. Alasan: {$validated['reason']}",
             'booking_id' => $booking->id,
         ]);
+
+        // Kirim email notifikasi ke pemesan
+        $this->sendBookingEmail($booking, 'rejected', $validated['reason']);
 
         return response()->json([
             'message' => 'Booking ditolak.',
@@ -326,6 +337,9 @@ class BookingController extends Controller
             );
         }
 
+        // Kirim email notifikasi ke admin/guru
+        $this->sendBookingEmail($booking, 'cancelled');
+
         return response()->json([
             'message' => 'Booking berhasil dibatalkan.',
             'data' => new BookingResource($booking->fresh(['user', 'lab', 'approver', 'report'])),
@@ -349,6 +363,20 @@ class BookingController extends Controller
                 'message' => $message,
                 'booking_id' => $booking->id,
             ]);
+        }
+    }
+
+    /**
+     * Kirim email notifikasi booking.
+     */
+    private function sendBookingEmail(Booking $booking, string $action, ?string $additionalMessage = null): void
+    {
+        try {
+            Mail::to($booking->user->email)
+                ->send(new BookingNotification($booking, $action, $additionalMessage));
+        } catch (\Exception $e) {
+            // Log error tapi jangan throw — email gagal tidak boleh memblokir operasi.
+            \Log::warning('Gagal mengirim email notifikasi booking: ' . $e->getMessage());
         }
     }
 

@@ -3,6 +3,7 @@ import client, { extractError } from '../../api/client'
 import { useToast } from '../../context/ToastContext'
 import Modal from '../../components/Modal'
 import StatCard from '../../components/StatCard'
+import MiniBarChart from '../../components/MiniBarChart'
 import {
   IconCalendar,
   IconCheckCircle,
@@ -18,7 +19,7 @@ import { DashboardHeader, LabUsageChart, PendingQueue } from './parts'
  */
 export default function GuruDashboard({ data, refresh }) {
   const { toast } = useToast()
-  const { stats, lab_usage: labUsage, pending_approvals: pendingApprovals } = data
+  const { stats, lab_usage: labUsage, pending_approvals: pendingApprovals, mini_chart_data: miniChartData } = data
 
   const [processing, setProcessing] = useState(false)
   const [rejectTarget, setRejectTarget] = useState(null)
@@ -75,6 +76,7 @@ export default function GuruDashboard({ data, refresh }) {
           value={stats.approved}
           accent="emerald"
           sub="Jadwal terkonfirmasi"
+          miniChart={<MiniBarChart data={miniChartData} color="bg-emerald-400" />}
         />
         <StatCard
           icon={IconX}
@@ -89,6 +91,7 @@ export default function GuruDashboard({ data, refresh }) {
           value={stats.total_bookings}
           accent="sky"
           sub="Semua status"
+          miniChart={<MiniBarChart data={miniChartData} color="bg-sky-400" />}
         />
       </div>
 
