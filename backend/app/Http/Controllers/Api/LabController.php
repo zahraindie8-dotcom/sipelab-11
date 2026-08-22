@@ -20,10 +20,12 @@ class LabController extends Controller
     {
         $labs = Lab::query()
             ->when($request->query('search'), function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('code', 'like', "%{$search}%")
-                        ->orWhere('location', 'like', "%{$search}%");
+                // Sanitize: escape SQL wildcards to prevent pattern abuse
+                $safeSearch = str_replace(['%', '_'], ['\%', '\_'], $search);
+                $query->where(function ($q) use ($safeSearch) {
+                    $q->where('name', 'like', "%{$safeSearch}%")
+                        ->orWhere('code', 'like', "%{$safeSearch}%")
+                        ->orWhere('location', 'like', "%{$safeSearch}%");
                 });
             })
             ->when($request->query('status'), function ($query, $status) {

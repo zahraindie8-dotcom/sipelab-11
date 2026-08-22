@@ -18,9 +18,11 @@ class UserController extends Controller
     {
         $users = User::query()
             ->when($request->query('search'), function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
+                // Sanitize: escape SQL wildcards to prevent pattern abuse
+                $safeSearch = str_replace(['%', '_'], ['\%', '\_'], $search);
+                $query->where(function ($q) use ($safeSearch) {
+                    $q->where('name', 'like', "%{$safeSearch}%")
+                        ->orWhere('email', 'like', "%{$safeSearch}%");
                 });
             })
             ->when($request->query('role'), function ($query, $role) {

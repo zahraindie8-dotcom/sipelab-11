@@ -23,10 +23,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 // ============================================================
-// Autentikasi (publik)
+// Autentikasi (publik) — rate limited untuk brute force protection
 // ============================================================
-Route::post('/login', [AuthController::class, 'login'])->name('api.login');
-Route::post('/register', [AuthController::class, 'register'])->name('api.register');
+Route::middleware('throttle.login')->group(function () {
+    Route::post('/login', [AuthController::class, 'login'])->name('api.login');
+    Route::post('/register', [AuthController::class, 'register'])->name('api.register');
+});
 
 // ============================================================
 // Route yang butuh token Sanctum
