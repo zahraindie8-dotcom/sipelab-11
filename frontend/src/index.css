@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-slate-100 text-slate-800;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-600 text-white shadow-sm hover:bg-brand-700 focus:ring-brand-500 active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply btn border border-slate-300 bg-white text-slate-700 shadow-sm hover:bg-slate-50 focus:ring-brand-400 active:scale-[0.98];
+  }
+
+  .btn-danger {
+    @apply btn bg-rose-600 text-white shadow-sm hover:bg-rose-700 focus:ring-rose-500 active:scale-[0.98];
+  }
+
+  .btn-success {
+    @apply btn bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus:ring-emerald-500 active:scale-[0.98];
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white shadow-card;
+  }
+
+  .table-head {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500;
+  }
+
+  .table-cell {
+    @apply px-4 py-3 text-sm text-slate-700;
+  }
+}
+
+/* Scrollbar halus */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ============================================================
+   Print Styles — hanya tampil saat user klik Cetak / Ctrl+P
+   ============================================================ */
+
+/* Sembunyikan semua elemen UI saat print, kecuali .print-only */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print-only,
+  .print-only * {
+    visibility: visible !important;
+  }
+
+  /* Sembunyikan sidebar, topbar, footer, modal */
+  aside,
+  header,
+  nav,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Tampilkan area cetak dari off-screen ke posisi normal */
+  .print-only {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    padding: 20px !important;
+    background: white !important;
+  }
+
+  /* Rapihkan konten cetak */
+  .print-content {
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #000;
+  }
+
+  .print-header {
+    margin-bottom: 16px;
+  }
+
+  .print-footer {
+    font-size: 9pt;
+    color: #666;
+  }
+
+  /* Putus halaman antar detail laporan */
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+  }
+
+  /* Reset background & shadow */
+  .print-content * {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* Tabel tetap rapi */
+  .print-content table {
+    border-collapse: collapse;
+  }
+
+  /* Gambar tidak terlalu besar */
+  .print-content img {
+    max-height: 120px;
+    width: auto;
+  }
+}
