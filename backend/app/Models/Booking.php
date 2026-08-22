@@ -12,6 +12,8 @@ class Booking extends Model
     public const STATUS_PENDING = 'pending';
     public const STATUS_APPROVED = 'approved';
     public const STATUS_REJECTED = 'rejected';
+    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_COMPLETED = 'completed';
 
     /**
      * The attributes that are mass assignable.
@@ -24,8 +26,22 @@ class Booking extends Model
         'date',
         'start_time',
         'end_time',
+        'purpose',
+        'participant_count',
         'status',
+        'approved_by',
+        'approved_at',
+        'rejection_reason',
         'notes',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'approved_at' => 'datetime',
     ];
 
     // Catatan: kolom 'date' sengaja TIDAK di-cast ke Carbon. Kolom DATE harus
@@ -57,6 +73,31 @@ class Booking extends Model
     }
 
     /**
+     * Relasi ke user yang menyetujui booking.
+     */
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Relasi ke notifikasi terkait booking ini.
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Scope: booking yang statusnya aktif (pending, approved) — menghitung konflik.
+     * Booking cancelled/rejected tidak dianggap sebagai konflik aktif.
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', [self::STATUS_PENDING, self::STATUS_APPROVED]);
+    }
+
+    /**
      * Scope: booking yang statusnya disetujui.
      */
     public function scopeApproved($query)
@@ -66,6 +107,9 @@ class Booking extends Model
 
     /**
      * Scope: booking yang rentang waktunya tumpang tindih dengan tanggal & jam tertentu.
+     *
+     * Hanya booking dengan status pending atau approved yang dianggap mengunci jadwal.
+     * Booking cancelled/rejected dikecualikan.
      *
      * Input jam bisa format H:i ("10:00") atau H:i:s ("10:00:00"); keduanya
      * dinormalisasi ke H:i:s agar cocok dengan kolom TIME di database.
@@ -78,11 +122,29 @@ class Booking extends Model
         $end = strlen($endTime) === 5 ? $endTime.':00' : $endTime;
 
         return $query->where('date', $date)
+            ->whereIn('status', [self::STATUS_PENDING, self::STATUS_APPROVED])
             ->where(function ($q) use ($start, $end) {
                 $q->where('start_time', '<', $end)
                     ->where('end_time', '>', $start);
             })
             ->when($exceptId, fn ($q) => $q->where('id', '!=', $exceptId));
+    }
+
+    /**
+     * Cek apakah booking ini masih bisa dibatalkan.
+     * Booking hanya bisa dibatalkan jika statusnya pending.
+     */
+    public function isCancellable(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /**
+     * Cek apakah booking ini masih bisa diedit.
+     */
+    public function isEditable(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
     }
 
     /**
@@ -93,6 +155,8 @@ class Booking extends Model
         return match ($this->status) {
             self::STATUS_APPROVED => 'Disetujui',
             self::STATUS_REJECTED => 'Ditolak',
+            self::STATUS_CANCELLED => 'Dibatalkan',
+            self::STATUS_COMPLETED => 'Selesai',
             default => 'Menunggu',
         };
     }

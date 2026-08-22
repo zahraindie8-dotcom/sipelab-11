@@ -13,6 +13,8 @@ import Approvals from './pages/Approvals'
 import Reports from './pages/Reports'
 import Users from './pages/Users'
 import Analytics from './pages/Analytics'
+import BookingCalendar from './pages/BookingCalendar'
+import Notifications from './pages/Notifications'
 import NotFound from './pages/NotFound'
 
 function FullScreenLoader() {
@@ -43,6 +45,8 @@ export default function App() {
           <Route path="/labs" element={<Labs />} />
           <Route path="/booking/new" element={<NewBooking />} />
           <Route path="/bookings" element={<Bookings />} />
+          <Route path="/calendar" element={<BookingCalendar />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route element={<RoleRoute roles={['admin', 'guru']} />}>
             <Route path="/approvals" element={<Approvals />} />
           </Route>

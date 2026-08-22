@@ -51,7 +51,7 @@ async function fillAndSubmit() {
   await waitFor(() => {
     expect(screen.getByRole('option', { name: /Lab Komputer 1/ })).toBeInTheDocument()
   })
-  fireEvent.change(screen.getByLabelText('Pilih Lab'), { target: { value: '1' } })
+  fireEvent.change(screen.getByLabelText('Pilih Laboratorium'), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('Tanggal'), { target: { value: '2026-09-01' } })
   fireEvent.change(screen.getByLabelText('Jam Mulai'), { target: { value: '08:00' } })
   fireEvent.change(screen.getByLabelText('Jam Selesai'), { target: { value: '10:00' } })

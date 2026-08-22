@@ -35,7 +35,7 @@ class RoleAccessTest extends TestCase
         $this->guru = User::factory()->create(['role' => 'guru']);
         $this->siswa = User::factory()->create(['role' => 'siswa']);
         $this->siswaLain = User::factory()->create(['role' => 'siswa']);
-        $this->lab = Lab::factory()->create();
+        $this->lab = Lab::factory()->create(['status' => Lab::STATUS_ACTIVE]);
     }
 
     private function createBooking(User $user, array $overrides = []): Booking
@@ -113,7 +113,7 @@ class RoleAccessTest extends TestCase
 
     public function test_lab_hanya_bisa_dibuat_diubah_dihapus_oleh_admin(): void
     {
-        $payload = ['name' => 'Lab Baru', 'capacity' => 30, 'description' => 'Deskripsi lab.'];
+        $payload = ['name' => 'Lab Baru', 'code' => 'NEW-01', 'capacity' => 30, 'description' => 'Deskripsi lab.'];
 
         foreach ([$this->siswa, $this->guru] as $user) {
             $this->actingAs($user, 'sanctum')->postJson('/api/labs', $payload)->assertForbidden();
@@ -122,7 +122,8 @@ class RoleAccessTest extends TestCase
         }
 
         $this->actingAs($this->admin, 'sanctum')->postJson('/api/labs', $payload)->assertCreated();
-        $this->actingAs($this->admin, 'sanctum')->putJson("/api/labs/{$this->lab->id}", $payload)->assertOk();
+        $updatePayload = ['name' => 'Lab Diubah', 'code' => 'UPD-01', 'capacity' => 40, 'description' => 'Deskripsi diubah.'];
+        $this->actingAs($this->admin, 'sanctum')->putJson("/api/labs/{$this->lab->id}", $updatePayload)->assertOk();
         $this->actingAs($this->admin, 'sanctum')->deleteJson("/api/labs/{$this->lab->id}")->assertOk();
     }
 
@@ -158,15 +159,20 @@ class RoleAccessTest extends TestCase
 
     public function test_semua_role_dapat_membuat_booking(): void
     {
-        $payload = [
-            'lab_id' => $this->lab->id,
-            'date' => now()->addDay()->toDateString(),
-            'start_time' => '13:00',
-            'end_time' => '15:00',
-        ];
+        // Buat 3 lab berbeda agar tidak bentrok.
+        $lab2 = Lab::factory()->create(['status' => Lab::STATUS_ACTIVE]);
+        $lab3 = Lab::factory()->create(['status' => Lab::STATUS_ACTIVE]);
 
-        foreach ([$this->admin, $this->guru, $this->siswa] as $user) {
-            $this->actingAs($user, 'sanctum')->postJson('/api/bookings', $payload)->assertCreated();
+        $users = [$this->admin, $this->guru, $this->siswa];
+        $labIds = [$this->lab->id, $lab2->id, $lab3->id];
+
+        foreach ($users as $i => $user) {
+            $this->actingAs($user, 'sanctum')->postJson('/api/bookings', [
+                'lab_id' => $labIds[$i],
+                'date' => now()->addDay()->toDateString(),
+                'start_time' => '13:00',
+                'end_time' => '15:00',
+            ])->assertCreated();
         }
     }
 
@@ -220,7 +226,7 @@ class RoleAccessTest extends TestCase
             ->assertForbidden();
 
         $this->actingAs($this->siswa, 'sanctum')
-            ->postJson("/api/bookings/{$milikSiswa->id}/reject")
+            ->postJson("/api/bookings/{$milikSiswa->id}/reject", ['reason' => 'Tolak'])
             ->assertForbidden();
 
         // Guru dapat menyetujui booking siapa pun.

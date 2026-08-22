@@ -65,6 +65,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Relasi ke notifikasi yang diterima user.
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Jumlah notifikasi belum dibaca.
+     */
+    public function getUnreadNotificationCountAttribute(): int
+    {
+        return $this->notifications()->where('is_read', false)->count();
+    }
+
+    /**
      * Cek apakah user adalah admin.
      */
     public function isAdmin(): bool

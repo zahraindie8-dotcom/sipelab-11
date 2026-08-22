@@ -16,7 +16,7 @@ vi.mock('../api/client', async (importOriginal) => {
 
 const labsResponse = {
   data: {
-    data: [{ id: 1, name: 'Lab Komputer 1', capacity: 36, description: 'Lab komputer' }],
+    data: [{ id: 1, name: 'Lab Komputer 1', code: 'KOM-01', capacity: 36, description: 'Lab komputer', location: 'Gedung A', status: 'active', status_label: 'Aktif' }],
     meta: { current_page: 1, last_page: 1, total: 1, from: 1, to: 1 },
   },
 }
@@ -61,6 +61,7 @@ describe('Labs — pesan error validasi form tampil ke pengguna', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Tambah Lab' }))
     fireEvent.change(screen.getByLabelText('Nama Lab'), { target: { value: LONG_NAME } })
+    fireEvent.change(screen.getByLabelText('Kode Lab'), { target: { value: 'KOM-99' } })
     fireEvent.change(screen.getByLabelText('Kapasitas'), { target: { value: '30' } })
     await submitModal('Simpan')
 
@@ -98,6 +99,7 @@ describe('Labs — pesan error validasi form tampil ke pengguna', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Tambah Lab' }))
     fireEvent.change(screen.getByLabelText('Nama Lab'), { target: { value: 'Lab Baru' } })
+    fireEvent.change(screen.getByLabelText('Kode Lab'), { target: { value: 'KOM-99' } })
     fireEvent.change(screen.getByLabelText('Kapasitas'), { target: { value: '30' } })
     await submitModal('Simpan')
 

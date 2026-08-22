@@ -139,3 +139,22 @@ export const IconTrending = (p) => (
     <path d="M16 7h6v6" />
   </svg>
 )
+
+export const IconMapPin = (p) => (
+  <svg {...base} {...p}>
+    <path d="M12 21c-4-4-8-7.5-8-11a8 8 0 0 1 16 0c0 3.5-4 7-8 11z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+)
+
+export const IconChevronLeft = (p) => (
+  <svg {...base} {...p}>
+    <path d="m15 18-6-6 6-6" />
+  </svg>
+)
+
+export const IconChevronRight = (p) => (
+  <svg {...base} {...p}>
+    <path d="m9 18 6-6-6-6" />
+  </svg>
+)

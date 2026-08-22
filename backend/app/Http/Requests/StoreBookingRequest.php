@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Models\Booking;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreBookingRequest extends FormRequest
 {
@@ -28,37 +27,10 @@ class StoreBookingRequest extends FormRequest
             'date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
+            'purpose' => ['nullable', 'string', 'max:500'],
+            'participant_count' => ['nullable', 'integer', 'min:1', 'max:500'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
-    }
-
-    /**
-     * Validasi tambahan: cek bentrok jadwal di lab & tanggal yang sama.
-     */
-    public function withValidator($validator): void
-    {
-        $validator->after(function ($validator) {
-            if ($validator->errors()->isNotEmpty()) {
-                return;
-            }
-
-            $data = $this->validated();
-
-            // Booking yang dianggap mengunci jadwal: yang sudah disetujui.
-            // ScopeOverlapping menormalkan format jam (H:i -> H:i:s) agar
-            // perbandingan dengan kolom TIME di database akurat di batas waktu.
-            $conflict = Booking::where('lab_id', $data['lab_id'])
-                ->where('status', Booking::STATUS_APPROVED)
-                ->overlapping($data['date'], $data['start_time'], $data['end_time'])
-                ->exists();
-
-            if ($conflict) {
-                $validator->errors()->add(
-                    'schedule',
-                    'Jadwal bentrok: lab sudah dipesan pada tanggal dan jam tersebut.'
-                );
-            }
-        });
     }
 
     /**
@@ -76,6 +48,9 @@ class StoreBookingRequest extends FormRequest
             'start_time.date_format' => 'Format jam mulai tidak valid (HH:MM).',
             'end_time.required' => 'Jam selesai wajib diisi.',
             'end_time.after' => 'Jam selesai harus setelah jam mulai.',
+            'purpose.max' => 'Tujuan penggunaan maksimal 500 karakter.',
+            'participant_count.min' => 'Jumlah peserta minimal 1 orang.',
+            'participant_count.max' => 'Jumlah peserta maksimal 500 orang.',
         ];
     }
 }

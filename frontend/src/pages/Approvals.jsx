@@ -104,6 +104,16 @@ export default function Approvals() {
                   <p className="text-sm text-slate-500">
                     {b.date} · {b.start_time}–{b.end_time}
                   </p>
+                  {b.purpose && (
+                    <p className="mt-1 text-sm text-slate-600">
+                      <span className="font-medium">Tujuan:</span> {b.purpose}
+                    </p>
+                  )}
+                  {b.participant_count && (
+                    <p className="text-sm text-slate-500">
+                      Peserta: {b.participant_count} orang
+                    </p>
+                  )}
                   {b.notes && (
                     <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
                       {b.notes}

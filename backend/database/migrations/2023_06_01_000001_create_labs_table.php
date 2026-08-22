@@ -14,8 +14,11 @@ return new class extends Migration
         Schema::create('labs', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('code', 20)->unique()->comment('Kode unik lab, mis. RPL-01');
             $table->integer('capacity');
             $table->text('description')->nullable();
+            $table->string('location')->nullable()->comment('Lokasi fisik lab');
+            $table->enum('status', ['active', 'maintenance', 'inactive'])->default('active');
             $table->timestamps();
         });
     }

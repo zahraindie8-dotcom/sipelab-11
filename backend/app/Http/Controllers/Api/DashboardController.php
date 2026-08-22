@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingResource;
 use App\Models\Booking;
 use App\Models\Lab;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -31,6 +32,7 @@ class DashboardController extends Controller
         $pendingCount = (clone $bookingQuery)->where('status', Booking::STATUS_PENDING)->count();
         $approvedCount = (clone $bookingQuery)->where('status', Booking::STATUS_APPROVED)->count();
         $rejectedCount = (clone $bookingQuery)->where('status', Booking::STATUS_REJECTED)->count();
+        $cancelledCount = (clone $bookingQuery)->where('status', Booking::STATUS_CANCELLED)->count();
 
         // Total penggunaan lab (jumlah booking disetujui) per lab.
         $labUsage = Lab::withCount([
@@ -38,6 +40,7 @@ class DashboardController extends Controller
         ])->orderByDesc('approved_count')->get()->map(fn ($lab) => [
             'id' => $lab->id,
             'name' => $lab->name,
+            'code' => $lab->code,
             'capacity' => $lab->capacity,
             'approved_count' => (int) $lab->approved_count,
         ]);
@@ -70,6 +73,11 @@ class DashboardController extends Controller
                 ->get()
             : collect();
 
+        // Jumlah notifikasi belum dibaca
+        $unreadNotifications = Notification::where('user_id', $user->id)
+            ->where('is_read', false)
+            ->count();
+
         return response()->json([
             'stats' => [
                 'total_labs' => Lab::count(),
@@ -77,11 +85,13 @@ class DashboardController extends Controller
                 'pending' => $pendingCount,
                 'approved' => $approvedCount,
                 'rejected' => $rejectedCount,
+                'cancelled' => $cancelledCount,
             ],
             'lab_usage' => $labUsage,
             'recent_bookings' => BookingResource::collection($recentBookings),
             'pending_approvals' => BookingResource::collection($pendingApprovals),
             'upcoming_bookings' => BookingResource::collection($upcomingBookings),
+            'unread_notifications' => $unreadNotifications,
         ]);
     }
 }

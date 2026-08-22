@@ -31,7 +31,7 @@ class ValidationTest extends TestCase
         $this->admin = User::factory()->create(['role' => 'admin']);
         $this->guru = User::factory()->create(['role' => 'guru']);
         $this->siswa = User::factory()->create(['role' => 'siswa']);
-        $this->lab = Lab::factory()->create();
+        $this->lab = Lab::factory()->create(['status' => Lab::STATUS_ACTIVE]);
     }
 
     private function validBookingPayload(array $overrides = []): array
@@ -145,14 +145,14 @@ class ValidationTest extends TestCase
         $this->actingAs($this->admin, 'sanctum')
             ->postJson('/api/labs', ['name' => '', 'capacity' => '', 'description' => ''])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'capacity']);
+            ->assertJsonValidationErrors(['name', 'capacity', 'code']);
     }
 
     public function test_lab_menolak_kapasitas_bukan_angka_atau_di_bawah_1(): void
     {
         foreach (['abc', 0, -5, 501] as $capacity) {
             $this->actingAs($this->admin, 'sanctum')
-                ->postJson('/api/labs', ['name' => 'Lab X', 'capacity' => $capacity])
+                ->postJson('/api/labs', ['name' => 'Lab X', 'code' => 'X-' . rand(1, 99), 'capacity' => $capacity])
                 ->assertUnprocessable()
                 ->assertJsonValidationErrors('capacity');
         }
@@ -164,6 +164,22 @@ class ValidationTest extends TestCase
             ->putJson("/api/labs/{$this->lab->id}", ['capacity' => 0])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('capacity');
+    }
+
+    public function test_lab_menolak_code_duplikat(): void
+    {
+        $this->actingAs($this->admin, 'sanctum')
+            ->postJson('/api/labs', ['name' => 'Lab Duplikat', 'code' => $this->lab->code, 'capacity' => 20])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('code');
+    }
+
+    public function test_lab_menolak_status_invalid(): void
+    {
+        $this->actingAs($this->admin, 'sanctum')
+            ->postJson('/api/labs', ['name' => 'Lab X', 'code' => 'XX-1', 'capacity' => 20, 'status' => 'unknown'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
     }
 
     // ============================================================
@@ -220,6 +236,31 @@ class ValidationTest extends TestCase
             ->postJson('/api/bookings', $this->validBookingPayload(['end_time' => '08:00']))
             ->assertUnprocessable()
             ->assertJsonValidationErrors('end_time');
+    }
+
+    public function test_booking_menolak_lab_maintenance(): void
+    {
+        $maintenanceLab = Lab::factory()->create(['status' => Lab::STATUS_MAINTENANCE]);
+
+        $this->actingAs($this->siswa, 'sanctum')
+            ->postJson('/api/bookings', $this->validBookingPayload(['lab_id' => $maintenanceLab->id]))
+            ->assertUnprocessable();
+    }
+
+    public function test_booking_menolak_lab_inactive(): void
+    {
+        $inactiveLab = Lab::factory()->create(['status' => Lab::STATUS_INACTIVE]);
+
+        $this->actingAs($this->siswa, 'sanctum')
+            ->postJson('/api/bookings', $this->validBookingPayload(['lab_id' => $inactiveLab->id]))
+            ->assertUnprocessable();
+    }
+
+    public function test_booking_menolak_melebihi_kapasitas(): void
+    {
+        $this->actingAs($this->siswa, 'sanctum')
+            ->postJson('/api/bookings', $this->validBookingPayload(['participant_count' => $this->lab->capacity + 1]))
+            ->assertUnprocessable();
     }
 
     public function test_update_booking_menolak_tanggal_masa_lalu_dan_jam_salah(): void
@@ -279,6 +320,24 @@ class ValidationTest extends TestCase
     // Penolakan booking
     // ============================================================
 
+    public function test_reject_menolak_alasan_kosong(): void
+    {
+        $booking = Booking::create([
+            'user_id' => $this->siswa->id,
+            'lab_id' => $this->lab->id,
+            'date' => now()->addDay()->toDateString(),
+            'start_time' => '08:00:00',
+            'end_time' => '10:00:00',
+            'status' => Booking::STATUS_PENDING,
+        ]);
+
+        // Reject sekarang wajib menyertakan alasan.
+        $this->actingAs($this->guru, 'sanctum')
+            ->postJson("/api/bookings/{$booking->id}/reject")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('reason');
+    }
+
     public function test_reject_menolak_alasan_terlalu_panjang(): void
     {
         $booking = Booking::create([
@@ -294,10 +353,52 @@ class ValidationTest extends TestCase
             ->postJson("/api/bookings/{$booking->id}/reject", ['reason' => str_repeat('a', 1001)])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('reason');
+    }
 
-        // Tanpa alasan tetap boleh (opsional).
-        $this->actingAs($this->guru, 'sanctum')
-            ->postJson("/api/bookings/{$booking->id}/reject")
+    // ============================================================
+    // Cancel booking
+    // ============================================================
+
+    public function test_cancel_menolak_booking_yang_sudah_disetujui(): void
+    {
+        $booking = Booking::create([
+            'user_id' => $this->siswa->id,
+            'lab_id' => $this->lab->id,
+            'date' => now()->addDay()->toDateString(),
+            'start_time' => '08:00:00',
+            'end_time' => '10:00:00',
+            'status' => Booking::STATUS_APPROVED,
+        ]);
+
+        $this->actingAs($this->siswa, 'sanctum')
+            ->postJson("/api/bookings/{$booking->id}/cancel")
+            ->assertUnprocessable();
+    }
+
+    public function test_cancel_menolak_booking_yang_bukan_milik_siswa(): void
+    {
+        $booking = Booking::create([
+            'user_id' => $this->guru->id,
+            'lab_id' => $this->lab->id,
+            'date' => now()->addDay()->toDateString(),
+            'start_time' => '08:00:00',
+            'end_time' => '10:00:00',
+            'status' => Booking::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($this->siswa, 'sanctum')
+            ->postJson("/api/bookings/{$booking->id}/cancel")
+            ->assertForbidden();
+    }
+
+    // ============================================================
+    // Lab availability
+    // ============================================================
+
+    public function test_availability_menolak_tanggal_dan_jam_wajib(): void
+    {
+        $this->actingAs($this->siswa, 'sanctum')
+            ->getJson("/api/labs/{$this->lab->availability}")
             ->assertOk();
     }
 

@@ -1,5 +1,5 @@
 import StatusBadge from './StatusBadge'
-import { IconCalendar, IconClock, IconFlask, IconCamera } from './icons'
+import { IconCalendar, IconClock, IconFlask, IconCamera, IconUsers, IconShield } from './icons'
 
 const roleBadge = {
   admin: 'bg-brand-100 text-brand-700 ring-brand-200',
@@ -96,10 +96,60 @@ export default function BookingDetail({ booking }) {
           </div>
         </InfoRow>
 
+        {booking.purpose && (
+          <InfoRow label="Tujuan">
+            <span>{booking.purpose}</span>
+          </InfoRow>
+        )}
+
+        {booking.participant_count > 0 && (
+          <InfoRow label="Peserta">
+            <div className="flex items-center gap-2">
+              <IconUsers className="h-4 w-4 text-slate-400" />
+              <span className="font-medium">{booking.participant_count} orang</span>
+              {booking.lab?.capacity && (
+                <span className="text-xs text-slate-400">
+                  / {booking.lab.capacity} kapasitas
+                </span>
+              )}
+            </div>
+          </InfoRow>
+        )}
+
         {booking.notes && (
           <InfoRow label="Catatan">
             <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm leading-relaxed text-slate-600">
               {booking.notes}
+            </div>
+          </InfoRow>
+        )}
+
+        {booking.rejection_reason && (
+          <InfoRow label="Alasan Tolak">
+            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm leading-relaxed text-rose-700">
+              {booking.rejection_reason}
+            </div>
+          </InfoRow>
+        )}
+
+        {booking.approved_by && (
+          <InfoRow label="Disetujui Oleh">
+            <div className="flex items-center gap-2">
+              <IconShield className="h-4 w-4 text-emerald-500" />
+              <span className="font-medium text-emerald-700">
+                {booking.approver?.name ?? `User #${booking.approved_by}`}
+              </span>
+              {booking.approved_at && (
+                <span className="text-xs text-slate-400">
+                  {new Date(booking.approved_at).toLocaleString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+              )}
             </div>
           </InfoRow>
         )}

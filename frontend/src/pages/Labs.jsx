@@ -12,9 +12,22 @@ import {
   IconSearch,
   IconTrash,
   IconUsers,
+  IconMapPin,
 } from '../components/icons'
 
-const emptyForm = { name: '', capacity: '', description: '' }
+const emptyForm = { name: '', code: '', capacity: '', description: '', location: '', status: 'active' }
+
+const statusOptions = [
+  { value: 'active', label: 'Aktif' },
+  { value: 'maintenance', label: 'Maintenance' },
+  { value: 'inactive', label: 'Tidak Aktif' },
+]
+
+const statusBadge = {
+  active: 'bg-emerald-100 text-emerald-700 ring-emerald-200',
+  maintenance: 'bg-amber-100 text-amber-700 ring-amber-200',
+  inactive: 'bg-rose-100 text-rose-700 ring-rose-200',
+}
 
 export default function Labs() {
   const { user } = useAuth()
@@ -63,7 +76,14 @@ export default function Labs() {
 
   const openEdit = (lab) => {
     setEditing(lab)
-    setForm({ name: lab.name, capacity: lab.capacity, description: lab.description ?? '' })
+    setForm({
+      name: lab.name,
+      code: lab.code,
+      capacity: lab.capacity,
+      description: lab.description ?? '',
+      location: lab.location ?? '',
+      status: lab.status ?? 'active',
+    })
     setFormError(null)
     setModalOpen(true)
   }
@@ -108,7 +128,7 @@ export default function Labs() {
         <div>
           <h1 className="text-xl font-bold text-slate-800">Daftar Lab</h1>
           <p className="text-sm text-slate-500">
-            {isAdmin ? 'Kelola data lab sekolah' : 'Lihat informasi lab yang tersedia'}
+            {isAdmin ? 'Kelola data laboratorium sekolah' : 'Lihat informasi lab yang tersedia'}
           </p>
         </div>
         {isAdmin && (
@@ -124,7 +144,7 @@ export default function Labs() {
         <IconSearch className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           className="input !pl-10"
-          placeholder="Cari nama lab..."
+          placeholder="Cari nama, kode, atau lokasi lab..."
           value={search}
           onChange={(e) => {
             setSearch(e.target.value)
@@ -155,12 +175,14 @@ export default function Labs() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px]">
+              <table className="w-full min-w-[760px]">
                 <thead className="border-b border-slate-100 bg-slate-50">
                   <tr>
-                    <th className="table-head">Nama Lab</th>
+                    <th className="table-head">Lab</th>
+                    <th className="table-head">Kode</th>
+                    <th className="table-head">Lokasi</th>
                     <th className="table-head">Kapasitas</th>
-                    <th className="table-head">Deskripsi</th>
+                    <th className="table-head">Status</th>
                     {isAdmin && <th className="table-head text-right">Aksi</th>}
                   </tr>
                 </thead>
@@ -172,8 +194,26 @@ export default function Labs() {
                           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
                             <IconFlask className="h-5 w-5" />
                           </div>
-                          <span className="font-semibold text-slate-700">{lab.name}</span>
+                          <div>
+                            <span className="font-semibold text-slate-700">{lab.name}</span>
+                            {lab.description && (
+                              <p className="max-w-[200px] truncate text-xs text-slate-400">
+                                {lab.description}
+                              </p>
+                            )}
+                          </div>
                         </div>
+                      </td>
+                      <td className="table-cell">
+                        <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">
+                          {lab.code}
+                        </span>
+                      </td>
+                      <td className="table-cell">
+                        <span className="inline-flex items-center gap-1 text-sm text-slate-500">
+                          <IconMapPin className="h-3.5 w-3.5" />
+                          {lab.location || '—'}
+                        </span>
                       </td>
                       <td className="table-cell">
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
@@ -181,8 +221,14 @@ export default function Labs() {
                           {lab.capacity} orang
                         </span>
                       </td>
-                      <td className="table-cell max-w-xs truncate text-slate-500">
-                        {lab.description || <span className="text-slate-300">—</span>}
+                      <td className="table-cell">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${
+                            statusBadge[lab.status] ?? 'bg-slate-100 text-slate-600 ring-slate-200'
+                          }`}
+                        >
+                          {lab.status_label}
+                        </span>
                       </td>
                       {isAdmin && (
                         <td className="table-cell">
@@ -227,34 +273,65 @@ export default function Labs() {
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="label" htmlFor="lab-name">
-              Nama Lab
-            </label>
-            <input
-              id="lab-name"
-              className="input"
-              placeholder="cth: Lab Komputer 3"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label" htmlFor="lab-name">
+                Nama Lab
+              </label>
+              <input
+                id="lab-name"
+                className="input"
+                placeholder="cth: Lab Komputer 3"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <label className="label" htmlFor="lab-code">
+                Kode Lab
+              </label>
+              <input
+                id="lab-code"
+                className="input"
+                placeholder="cth: KOM-03"
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value })}
+                required
+              />
+            </div>
           </div>
-          <div>
-            <label className="label" htmlFor="lab-capacity">
-              Kapasitas
-            </label>
-            <input
-              id="lab-capacity"
-              type="number"
-              min="1"
-              className="input"
-              placeholder="cth: 36"
-              value={form.capacity}
-              onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-              required
-            />
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label" htmlFor="lab-capacity">
+                Kapasitas
+              </label>
+              <input
+                id="lab-capacity"
+                type="number"
+                min="1"
+                className="input"
+                placeholder="cth: 36"
+                value={form.capacity}
+                onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <label className="label" htmlFor="lab-location">
+                Lokasi
+              </label>
+              <input
+                id="lab-location"
+                className="input"
+                placeholder="cth: Gedung A, Lantai 2"
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+              />
+            </div>
           </div>
+
           <div>
             <label className="label" htmlFor="lab-desc">
               Deskripsi
@@ -268,7 +345,26 @@ export default function Labs() {
               onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
+
+          <div>
+            <label className="label" htmlFor="lab-status">
+              Status
+            </label>
+            <select
+              id="lab-status"
+              className="input"
+              value={form.status}
+              onChange={(e) => setForm({ ...form, status: e.target.value })}
+            >
+              {statusOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
             <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">
               Batal
             </button>

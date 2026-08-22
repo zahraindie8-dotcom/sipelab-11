@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\LabController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Labs — semua role login boleh melihat, hanya admin yang menulis
     Route::get('/labs', [LabController::class, 'index'])->name('api.labs.index');
     Route::get('/labs/{lab}', [LabController::class, 'show'])->name('api.labs.show');
+    Route::get('/labs/{lab}/availability', [LabController::class, 'availability'])->name('api.labs.availability');
     Route::middleware('role:admin')->group(function () {
         Route::post('/labs', [LabController::class, 'store'])->name('api.labs.store');
         Route::put('/labs/{lab}', [LabController::class, 'update'])->name('api.labs.update');
@@ -51,6 +53,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings', [BookingController::class, 'store'])->name('api.bookings.store');
     Route::put('/bookings/{booking}', [BookingController::class, 'update'])->name('api.bookings.update');
     Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->name('api.bookings.destroy');
+
+    // Cancel booking — pemilik atau admin
+    Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('api.bookings.cancel');
 
     // Approval — hanya admin & guru
     Route::middleware('role:admin,guru')->group(function () {
@@ -77,4 +82,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/users/{user}', [UserController::class, 'update'])->name('api.users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('api.users.destroy');
     });
+
+    // Notifications — semua role login
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('api.notifications.index');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('api.notifications.unread-count');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('api.notifications.mark-as-read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('api.notifications.mark-all-as-read');
 });

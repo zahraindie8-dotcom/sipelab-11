@@ -8,6 +8,7 @@ import {
   IconCheckCircle,
   IconFlask,
   IconHome,
+  IconInbox,
   IconLogout,
   IconMenu,
   IconPlus,
@@ -70,11 +71,13 @@ export default function Layout() {
       label: user.can_approve ? 'Semua Booking' : 'Booking Saya',
       icon: IconCalendar,
     },
+    { to: '/calendar', label: 'Kalender', icon: IconCalendar },
     ...(user.can_approve
       ? [{ to: '/approvals', label: 'Persetujuan', icon: IconCheckCircle }]
       : []),
     { to: '/labs', label: user.role === 'admin' ? 'Kelola Lab' : 'Daftar Lab', icon: IconFlask },
     { to: '/reports', label: 'Laporan', icon: IconCamera },
+    { to: '/notifications', label: 'Notifikasi', icon: IconInbox },
     ...(user.role === 'admin'
       ? [
           { to: '/analytics', label: 'Statistik', icon: IconTrending },

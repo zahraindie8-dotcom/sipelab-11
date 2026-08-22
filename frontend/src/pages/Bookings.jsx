@@ -15,6 +15,7 @@ const statusFilters = [
   { value: 'pending', label: 'Menunggu' },
   { value: 'approved', label: 'Disetujui' },
   { value: 'rejected', label: 'Ditolak' },
+  { value: 'cancelled', label: 'Dibatalkan' },
 ]
 
 export default function Bookings() {
@@ -92,7 +93,11 @@ export default function Bookings() {
   }
 
   const cancelBooking = (b) =>
-    act(() => client.delete(`/bookings/${b.id}`), 'Booking dibatalkan.', b.id)
+    act(
+      () => client.post(`/bookings/${b.id}/cancel`),
+      'Booking berhasil dibatalkan.',
+      b.id,
+    )
 
   return (
     <div className="space-y-6">
@@ -254,7 +259,7 @@ export default function Bookings() {
             </p>
             <div>
               <label className="label" htmlFor="reject-reason">
-                Alasan Penolakan (opsional)
+                Alasan Penolakan <span className="text-rose-500">*</span>
               </label>
               <textarea
                 id="reject-reason"
@@ -269,7 +274,7 @@ export default function Bookings() {
               <button type="button" onClick={() => setRejectTarget(null)} className="btn-secondary">
                 Batal
               </button>
-              <button type="submit" disabled={processing} className="btn-danger">
+              <button type="submit" disabled={processing || !reason.trim()} className="btn-danger">
                 {processing ? 'Memproses...' : 'Tolak Booking'}
               </button>
             </div>
