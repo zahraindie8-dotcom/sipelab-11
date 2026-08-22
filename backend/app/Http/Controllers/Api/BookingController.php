@@ -337,8 +337,7 @@ class BookingController extends Controller
      */
     private function notifyApprovers($sender, Booking $booking, string $type, string $title, string $message): void
     {
-        $approvers = \App\Models\User::where('role', 'admin')
-            ->orWhere('role', 'guru')
+        $approvers = \App\Models\User::whereIn('role', ['admin', 'guru'])
             ->where('id', '!=', $sender->id)
             ->get();
 
