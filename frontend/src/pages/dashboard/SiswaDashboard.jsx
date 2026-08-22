@@ -18,8 +18,8 @@ import { ActivityList, BookNowButton } from './parts'
  * banner sambutan, statistik booking miliknya, jadwal lab yang akan
  * datang, dan aktivitas terbaru.
  */
-export default function SiswaDashboard({ data, user }) {
-  const { stats, recent_bookings: recentBookings, upcoming_bookings: upcomingBookings, mini_chart_data: miniChartData } = data
+export default function SiswaDashboard({ data = {}, user }) {
+  const { stats = {}, recent_bookings: recentBookings = [], upcoming_bookings: upcomingBookings = [], mini_chart_data: miniChartData = [] } = data
   const firstName = user?.name?.split(' ')[0] ?? 'Siswa'
 
   return (

@@ -326,7 +326,7 @@ export default function Bookings() {
                               </button>
                             </>
                           )}
-                          {(user.id === b.user.id || user.role === 'admin') &&
+                          {(user?.id === b.user?.id || user?.role === 'admin') &&
                             b.status === 'pending' && (
                               <button
                                 onClick={() => cancelBooking(b)}

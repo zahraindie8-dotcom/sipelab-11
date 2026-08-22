@@ -17,7 +17,9 @@ return [
 
     'allowed_methods' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 
-    'allowed_origins' => explode(',', env('FRONTEND_URL', 'http://localhost:5173')),
+    // Default only allows explicit FRONTEND_URL. In production set e.g.
+    // FRONTEND_URL=https://lab.sekolah.sch.id
+    'allowed_origins' => array_filter(array_map('trim', explode(',', env('FRONTEND_URL', 'http://localhost:5173')))),
 
     'allowed_origins_patterns' => [],
 
@@ -27,6 +29,7 @@ return [
 
     'max_age' => 86400,
 
-    'supports_credentials' => false,
+    // Only allow credentials if frontend and backend share a trusted origin.
+    'supports_credentials' => env('CORS_SUPPORTS_CREDENTIALS', false),
 
 ];

@@ -73,47 +73,47 @@ export default function Analytics() {
   if (!data) return null
 
   const {
-    summary,
-    monthly_bookings: monthly,
-    lab_usage: labUsage,
-    status_breakdown: statusBreakdown,
-    weekly_bookings: weekly,
-    peak_hours: peakHours,
-    trends,
+    summary = {},
+    monthly_bookings: monthly = [],
+    lab_usage: labUsage = [],
+    status_breakdown: statusBreakdown = {},
+    weekly_bookings: weekly = {},
+    peak_hours: peakHours = [],
+    trends = null,
   } = data
 
   // Format data untuk chart booking per bulan
-  const monthlyChartData = monthly.map((m) => ({
-    label: m.label.split(' ')[0], // Ambil bulan saja
-    value: m.total,
+  const monthlyChartData = (monthly || []).map((m) => ({
+    label: (m?.label || '').split(' ')[0], // Ambil bulan saja
+    value: m?.total || 0,
     color: 'bg-brand-500',
   }))
 
   // Format data untuk chart status breakdown (horizontal)
-  const statusChartData = Object.entries(statusBreakdown).map(([status, count]) => ({
+  const statusChartData = Object.entries(statusBreakdown || {}).map(([status, count]) => ({
     label: statusLabels[status] ?? status,
     value: count,
     color: statusColors[status] ?? 'bg-slate-400',
   }))
 
   // Format data untuk chart penggunaan lab (horizontal)
-  const labChartData = labUsage.map((lab) => ({
-    label: lab.name,
-    value: lab.approved_count,
+  const labChartData = (labUsage || []).map((lab) => ({
+    label: lab?.name || '?',
+    value: lab?.approved_count || 0,
     color: 'bg-brand-500',
   }))
 
   // Format data untuk chart mingguan
   const weeklyChartData = dayLabels.map((label, i) => ({
     label,
-    value: weekly[i + 1] ?? 0, // DAYOFWEEK: 1=Min, 2=Sen, ...
+    value: (weekly && weekly[i + 1]) || 0, // DAYOFWEEK: 1=Min, 2=Sen, ...
     color: i === 0 ? 'bg-slate-300' : 'bg-sky-500',
   }))
 
   // Format data untuk jam tersibuk
-  const peakChartData = peakHours.map((p) => ({
-    label: p.hour,
-    value: p.total,
+  const peakChartData = (peakHours || []).map((p) => ({
+    label: p?.hour || '?',
+    value: p?.total || 0,
     color: 'bg-amber-500',
   }))
 
@@ -150,6 +150,7 @@ export default function Analytics() {
             Export CSV
           </a>
         </div>
+      </div>
 
       {/* Ringkasan */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

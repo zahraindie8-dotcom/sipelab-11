@@ -28,15 +28,39 @@ class AuthController extends Controller
             ]);
         }
 
-        // Hapus token lama agar hanya ada satu sesi aktif per perangkat.
-        $user->tokens()->delete();
+        // Jika pengguna tidak memilih "remember", hapus token lama agar
+        // sesi lama tidak tetap aktif. Jika memilih "remember", biarkan
+        // token lama ada sehingga user bisa tetap login di perangkat lain.
+        $remember = $validated['remember'] ?? false;
+        if (! $remember) {
+            $user->tokens()->delete();
+        }
 
-        $token = $user->createToken('api-token')->plainTextToken;
+        // Buat token API menggunakan Sanctum.
+        $newToken = $user->createToken('api-token');
+
+        // Jika 'remember' diminta, set expiry token lebih panjang (30 hari).
+        // Kolom expires_at mungkin belum ada di beberapa instalasi Sanctum,
+        // sehingga kita tangkap error dengan tenang.
+        if (! empty($remember)) {
+            try {
+                $accessToken = $newToken->accessToken;
+                if ($accessToken) {
+                    $accessToken->expires_at = now()->addDays(30);
+                    $accessToken->save();
+                }
+            } catch (\Throwable $e) {
+                // Kolom expires_at tidak ada — lanjutkan tanpa expiry.
+            }
+        }
+
+        $plain = $newToken->plainTextToken;
 
         return response()->json([
             'message' => 'Login berhasil.',
-            'token' => $token,
+            'token' => $plain,
             'user' => new UserResource($user),
+            'remember' => (bool) $remember,
         ]);
     }
 

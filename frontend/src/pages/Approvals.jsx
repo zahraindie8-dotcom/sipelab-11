@@ -208,7 +208,7 @@ export default function Approvals() {
             </p>
             <div>
               <label className="label" htmlFor="ap-reason">
-                Alasan Penolakan
+                Alasan Penolakan <span className="text-rose-500">*</span>
               </label>
               <textarea
                 id="ap-reason"
@@ -223,7 +223,7 @@ export default function Approvals() {
               <button type="button" onClick={() => setRejectTarget(null)} className="btn-secondary">
                 Batal
               </button>
-              <button type="submit" disabled={processing} className="btn-danger">
+              <button type="submit" disabled={processing || !reason.trim()} className="btn-danger">
                 {processing ? 'Memproses...' : 'Tolak Booking'}
               </button>
             </div>

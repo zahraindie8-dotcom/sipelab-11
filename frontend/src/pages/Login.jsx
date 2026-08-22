@@ -21,7 +21,7 @@ export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ email: '', password: '', remember: false })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
@@ -30,7 +30,7 @@ export default function Login() {
     setError(null)
     setSubmitting(true)
     try {
-      const user = await login(form.email, form.password)
+      const user = await login(form.email, form.password, form.remember)
       toast(`Selamat datang, ${user.name}!`)
       const from = location.state?.from || '/dashboard'
       navigate(from, { replace: true })
@@ -42,7 +42,7 @@ export default function Login() {
   }
 
   const fillDemo = (acc) => {
-    setForm({ email: acc.email, password: acc.password })
+    setForm({ email: acc.email, password: acc.password, remember: form.remember })
     setError(null)
   }
 
@@ -112,6 +112,18 @@ export default function Login() {
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="remember"
+                type="checkbox"
+                checked={form.remember}
+                onChange={(e) => setForm({ ...form, remember: e.target.checked })}
+                className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+              />
+              <label htmlFor="remember" className="text-sm text-slate-600">
+                Ingat saya di perangkat ini
+              </label>
             </div>
             <button type="submit" disabled={submitting} className="btn-primary w-full">
               {submitting ? 'Memproses...' : 'Masuk'}

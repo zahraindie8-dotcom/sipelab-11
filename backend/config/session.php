@@ -103,7 +103,8 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // Force secure cookies in production by setting SESSION_SECURE_COOKIE=true
+    'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV') === 'production'),
 
     /*
     |--------------------------------------------------------------------------
@@ -111,6 +112,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
+    // Prevent JavaScript access to session cookie
     'http_only' => true,
 
     /*
@@ -119,7 +121,8 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'same_site' => 'lax',
+    // Consider 'strict' for maximum CSRF protection; 'lax' allows top-level GET
+    'same_site' => env('SESSION_SAME_SITE', 'lax'),
 
     /*
     |--------------------------------------------------------------------------

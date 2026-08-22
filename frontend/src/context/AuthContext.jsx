@@ -17,13 +17,13 @@ export function AuthProvider({ children }) {
 
     client
       .get('/user')
-      .then((res) => setUser(res.data.data ?? res.data))
+      .then((res) => setUser(res.data))
       .catch(() => clearToken())
       .finally(() => setLoading(false))
   }, [])
 
-  const login = useCallback(async (email, password) => {
-    const { data } = await client.post('/login', { email, password })
+  const login = useCallback(async (email, password, remember = false) => {
+    const { data } = await client.post('/login', { email, password, remember })
     setToken(data.token)
     setUser(data.user)
     return data.user

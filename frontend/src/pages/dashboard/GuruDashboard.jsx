@@ -10,16 +10,16 @@ import {
   IconClock,
   IconX,
 } from '../../components/icons'
-import { DashboardHeader, LabUsageChart, PendingQueue } from './parts'
+import { DashboardHeader, LabUsageChart, PendingQueue, BookNowButton } from './parts'
 
 /**
  * Dashboard Guru — fokus persetujuan:
  * antrian booking yang menunggu persetujuan (dengan aksi langsung),
  * statistik booking, dan penggunaan lab.
  */
-export default function GuruDashboard({ data, refresh }) {
+export default function GuruDashboard({ data = {}, refresh }) {
   const { toast } = useToast()
-  const { stats, lab_usage: labUsage, pending_approvals: pendingApprovals, mini_chart_data: miniChartData } = data
+  const { stats = {}, lab_usage: labUsage = [], pending_approvals: pendingApprovals = [], mini_chart_data: miniChartData = [] } = data
 
   const [processing, setProcessing] = useState(false)
   const [rejectTarget, setRejectTarget] = useState(null)
@@ -59,6 +59,7 @@ export default function GuruDashboard({ data, refresh }) {
       <DashboardHeader
         title="Dashboard Guru"
         subtitle="Pantau antrian persetujuan & jadwal penggunaan lab"
+        action={<BookNowButton />}
       />
 
       {/* Kartu statistik */}
@@ -128,7 +129,7 @@ export default function GuruDashboard({ data, refresh }) {
             </p>
             <div>
               <label className="label" htmlFor="gd-reason">
-                Alasan Penolakan
+                Alasan Penolakan <span className="text-rose-500">*</span>
               </label>
               <textarea
                 id="gd-reason"
@@ -143,7 +144,7 @@ export default function GuruDashboard({ data, refresh }) {
               <button type="button" onClick={() => setRejectTarget(null)} className="btn-secondary">
                 Batal
               </button>
-              <button type="submit" disabled={processing} className="btn-danger">
+              <button type="submit" disabled={processing || !reason.trim()} className="btn-danger">
                 {processing ? 'Memproses...' : 'Tolak Booking'}
               </button>
             </div>

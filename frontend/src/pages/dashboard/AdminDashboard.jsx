@@ -5,6 +5,8 @@ import {
   IconCheckCircle,
   IconClock,
   IconFlask,
+  IconInbox,
+  IconX,
 } from '../../components/icons'
 import {
   ActivityList,
@@ -17,12 +19,13 @@ import {
  * Dashboard Admin — fokus kontrol & manajemen sekolah:
  * statistik seluruh sekolah, penggunaan lab, dan aktivitas terbaru.
  */
-export default function AdminDashboard({ data }) {
+export default function AdminDashboard({ data = {} }) {
   const {
-    stats,
-    lab_usage: labUsage,
-    recent_bookings: recentBookings,
-    mini_chart_data: miniChartData,
+    stats = {},
+    lab_usage: labUsage = [],
+    recent_bookings: recentBookings = [],
+    mini_chart_data: miniChartData = [],
+    unread_notifications: unreadNotifications = 0,
   } = data
 
   return (
@@ -64,6 +67,31 @@ export default function AdminDashboard({ data }) {
           value={stats.pending}
           accent="amber"
           sub="Perlu persetujuan"
+        />
+      </div>
+
+      {/* Baris kedua: rejected, cancelled, dan notifikasi */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard
+          icon={IconX}
+          label="Ditolak"
+          value={stats.rejected}
+          accent="rose"
+          sub="Booking tertolak"
+        />
+        <StatCard
+          icon={IconCalendar}
+          label="Dibatalkan"
+          value={stats.cancelled}
+          accent="sky"
+          sub="Booking dibatalkan"
+        />
+        <StatCard
+          icon={IconInbox}
+          label="Notifikasi"
+          value={unreadNotifications}
+          accent="brand"
+          sub="Belum dibaca"
         />
       </div>
 

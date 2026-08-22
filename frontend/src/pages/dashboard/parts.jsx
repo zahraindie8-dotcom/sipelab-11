@@ -49,16 +49,16 @@ export function SectionCard({ title, icon: Icon, action, children }) {
   )
 }
 
-export function LabUsageChart({ labUsage }) {
-  const maxUsage = Math.max(...labUsage.map((l) => l.approved_count), 1)
+export function LabUsageChart({ labUsage = [] }) {
+  const maxUsage = Math.max(...(labUsage?.map((l) => l.approved_count) || [1]), 1)
 
   return (
     <SectionCard title="Penggunaan Lab" icon={IconChart}>
       <div className="space-y-4 p-5">
-        {labUsage.length === 0 && (
+        {(!labUsage || labUsage.length === 0) && (
           <p className="text-sm text-slate-400">Belum ada data penggunaan.</p>
         )}
-        {labUsage.map((lab) => (
+        {labUsage && labUsage.length > 0 && labUsage.map((lab) => (
           <div key={lab.id}>
             <div className="mb-1.5 flex items-center justify-between text-sm">
               <span className="font-medium text-slate-600">{lab.name}</span>
@@ -85,7 +85,7 @@ const activityTone = {
   pending: 'bg-amber-50 text-amber-600',
 }
 
-export function ActivityList({ bookings, seeAllTo, emptyAction }) {
+export function ActivityList({ bookings = [], seeAllTo, emptyAction }) {
   return (
     <SectionCard
       title="Aktivitas Terbaru"
@@ -101,7 +101,7 @@ export function ActivityList({ bookings, seeAllTo, emptyAction }) {
         ) : null
       }
     >
-      {bookings.length === 0 ? (
+      {!bookings || bookings.length === 0 ? (
         <EmptyState
           icon={IconCalendar}
           title="Belum ada booking"
@@ -144,7 +144,7 @@ export function ActivityList({ bookings, seeAllTo, emptyAction }) {
   )
 }
 
-export function PendingQueue({ bookings, processing, onApprove, onReject, seeAllTo }) {
+export function PendingQueue({ bookings = [], processing, onApprove, onReject, seeAllTo }) {
   return (
     <SectionCard
       title="Antrian Persetujuan"
@@ -160,7 +160,7 @@ export function PendingQueue({ bookings, processing, onApprove, onReject, seeAll
         ) : null
       }
     >
-      {bookings.length === 0 ? (
+      {!bookings || bookings.length === 0 ? (
         <EmptyState
           icon={IconInbox}
           title="Tidak ada antrian"
@@ -213,7 +213,7 @@ export function PendingQueue({ bookings, processing, onApprove, onReject, seeAll
   )
 }
 
-export function BookNowButton({ className = 'btn-primary' }) {
+export function BookNowButton({ className = 'btn-primary' } = {}) {
   return (
     <Link to="/booking/new" className={className}>
       <IconPlus className="h-4 w-4" />
