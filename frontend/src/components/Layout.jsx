@@ -12,6 +12,7 @@ import {
   IconLogout,
   IconMenu,
   IconPlus,
+  IconShield,
   IconTrending,
   IconUsers,
   IconX,
@@ -59,6 +60,9 @@ export default function Layout() {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  console.log('LAYOUT USER:', user)
+  console.log('LAYOUT ROLE:', user?.role)
+
   if (!user) return null
 
   const theme = roleTheme[user.role] ?? roleTheme.admin
@@ -82,6 +86,9 @@ export default function Layout() {
       ? [
           { to: '/analytics', label: 'Statistik', icon: IconTrending },
           { to: '/users', label: 'Kelola User', icon: IconUsers },
+          { to: '/audit-logs', label: 'Audit Logs', icon: IconShield },
+          { to: '/system-status', label: 'System Status', icon: IconChart },
+          { to: '/ip-management', label: 'IP Management', icon: IconShield },
         ]
       : []),
   ]
@@ -213,11 +220,11 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
           <Outlet />
         </main>
 
-        <footer className="pb-6 text-center text-xs text-slate-400">
+        <footer className="pb-4 text-center text-[11px] text-slate-400 sm:pb-6 sm:text-xs">
           SiLab — Smart Lab Management System v1.0
         </footer>
       </div>

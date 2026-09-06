@@ -22,14 +22,11 @@ class LabController extends Controller
             ->when($request->query('search'), function ($query, $search) {
                 // Sanitize: escape SQL wildcards to prevent pattern abuse
                 $safeSearch = str_replace(['%', '_'], ['\%', '\_'], $search);
+
                 $query->where(function ($q) use ($safeSearch) {
                     $q->where('name', 'like', "%{$safeSearch}%")
-                        ->orWhere('code', 'like', "%{$safeSearch}%")
-                        ->orWhere('location', 'like', "%{$safeSearch}%");
+                        ->orWhere('description', 'like', "%{$safeSearch}%");
                 });
-            })
-            ->when($request->query('status'), function ($query, $status) {
-                $query->where('status', $status);
             })
             ->orderBy('name')
             ->paginate($request->integer('per_page', 10));
@@ -104,7 +101,6 @@ class LabController extends Controller
                 $request->start_time,
                 $request->end_time
             )
-            ->with(['user:id,name'])
             ->get()
             ->map(fn ($b) => [
                 'id' => $b->id,
@@ -112,7 +108,6 @@ class LabController extends Controller
                 'status_label' => $b->status_label,
                 'start_time' => substr($b->start_time, 0, 5),
                 'end_time' => substr($b->end_time, 0, 5),
-                'user_name' => $b->user?->name,
             ]);
 
         return response()->json([

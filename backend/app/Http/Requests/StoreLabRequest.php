@@ -23,11 +23,9 @@ class StoreLabRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:20', 'unique:labs,code'],
             'capacity' => ['required', 'integer', 'min:1', 'max:500'],
-            'description' => ['nullable', 'string', 'max:1000'],
             'location' => ['nullable', 'string', 'max:255'],
-            'status' => ['sometimes', 'string', 'in:active,maintenance,inactive'],
+            'description' => ['nullable', 'string', 'max:1000'],
         ];
     }
 
@@ -38,12 +36,15 @@ class StoreLabRequest extends FormRequest
     {
         return [
             'name.required' => 'Nama lab wajib diisi.',
-            'code.required' => 'Kode lab wajib diisi.',
-            'code.unique' => 'Kode lab sudah digunakan.',
+            'name.string' => 'Nama lab harus berupa teks.',
             'capacity.required' => 'Kapasitas lab wajib diisi.',
             'capacity.integer' => 'Kapasitas harus berupa angka.',
             'capacity.min' => 'Kapasitas minimal 1.',
-            'status.in' => 'Status lab harus active, maintenance, atau inactive.',
+            'capacity.max' => 'Kapasitas maksimal 500.',
+            'description.string' => 'Deskripsi harus berupa teks.',
+            'description.max' => 'Deskripsi maksimal 1000 karakter.',
+            'location.string' => 'Lokasi lab harus berupa teks.',
+            'location.max' => 'Lokasi maksimal 255 karakter.',
         ];
     }
 }

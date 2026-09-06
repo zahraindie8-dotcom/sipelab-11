@@ -28,20 +28,19 @@ class AuthController extends Controller
             ]);
         }
 
-        // Jika pengguna tidak memilih "remember", hapus token lama agar
-        // sesi lama tidak tetap aktif. Jika memilih "remember", biarkan
-        // token lama ada sehingga user bisa tetap login di perangkat lain.
-        $remember = $validated['remember'] ?? false;
-        if (! $remember) {
-            $user->tokens()->delete();
+        // Cek apakah email sudah diverifikasi
+        if (! $user->hasVerifiedEmail()) {
+            throw ValidationException::withMessages([
+                'email' => ['Email belum diverifikasi. Silakan cek inbox Anda untuk kode verifikasi.'],
+            ]);
         }
 
+        // Hapus seluruh token lama agar satu akun hanya memiliki
+        // satu sesi aktif pada satu waktu.
+        $remember = $validated['remember'] ?? false;
+        $user->tokens()->delete();
         // Buat token API menggunakan Sanctum.
         $newToken = $user->createToken('api-token');
-
-        // Jika 'remember' diminta, set expiry token lebih panjang (30 hari).
-        // Kolom expires_at mungkin belum ada di beberapa instalasi Sanctum,
-        // sehingga kita tangkap error dengan tenang.
         if (! empty($remember)) {
             try {
                 $accessToken = $newToken->accessToken;
@@ -73,16 +72,23 @@ class AuthController extends Controller
 
         $user = User::create([
             'name' => $validated['name'],
+            'username' => $validated['username'],
             'email' => $validated['email'],
             'password' => $validated['password'],
-            'role' => 'siswa',
+            'role' => $validated['role'],
         ]);
 
-        $token = $user->createToken('api-token')->plainTextToken;
+        // Kirim email verifikasi
+        try {
+            $token = \Illuminate\Support\Str::random(6);
+            $user->update(['remember_token' => $token]);
+            \Mail::to($user->email)->send(new \App\Mail\VerifyEmail($user, $token));
+        } catch (\Exception $e) {
+            \Log::warning('Gagal mengirim email verifikasi: ' . $e->getMessage());
+        }
 
         return response()->json([
-            'message' => 'Registrasi berhasil. Selamat datang!',
-            'token' => $token,
+            'message' => 'Registrasi berhasil. Silakan cek email Anda untuk kode verifikasi.',
             'user' => new UserResource($user),
         ], 201);
     }

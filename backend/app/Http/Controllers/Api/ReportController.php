@@ -9,6 +9,7 @@ use App\Models\Booking;
 use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ReportController extends Controller
 {
@@ -59,7 +60,11 @@ class ReportController extends Controller
             ], 422);
         }
 
-        $photoPath = $request->file('photo')->store('reports', 'public');
+        // Generate UUID filename untuk keamanan
+        $file = $request->file('photo');
+        $extension = $file->getClientOriginalExtension();
+        $filename = Str::uuid() . '.' . $extension;
+        $photoPath = $file->storeAs('reports', $filename, 'private');
 
         $report = Report::create([
             'booking_id' => $booking->id,
@@ -101,13 +106,51 @@ class ReportController extends Controller
         }
 
         if ($report->photo) {
-            Storage::disk('public')->delete($report->photo);
+            Storage::disk('private')->delete($report->photo);
         }
 
         $report->delete();
 
         return response()->json([
             'message' => 'Laporan berhasil dihapus.',
+        ]);
+    }
+
+    /**
+     * Tampilkan foto laporan dari private storage.
+     * Hanya pemilik atau admin/guru yang bisa melihat.
+     */
+    public function showPhoto(Request $request, Report $report)
+    {
+        $user = $request->user();
+
+        // Cek hak akses
+        if (! $user->canApprove() && $report->user_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki akses ke foto ini.');
+        }
+
+        if (! $report->photo || ! Storage::disk('private')->exists($report->photo)) {
+            abort(404, 'Foto tidak ditemukan.');
+        }
+
+        // Tentukan MIME type
+        $path = $report->photo;
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $mimeTypes = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+        ];
+        $mimeType = $mimeTypes[strtolower($extension)] ?? 'application/octet-stream';
+
+        // Stream file dari private storage
+        return response()->stream(function () use ($path) {
+            echo Storage::disk('private')->get($path);
+        }, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . basename($path) . '"',
+            'Cache-Control' => 'private, max-age=3600',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 }

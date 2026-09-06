@@ -36,9 +36,16 @@ class DashboardController extends Controller
         $cancelledCount = (clone $bookingQuery)->where('status', Booking::STATUS_CANCELLED)->count();
 
         // Total penggunaan lab (jumlah booking disetujui) per lab.
-        $labUsage = Lab::withCount([
-            'bookings as approved_count' => fn ($q) => $q->where('status', Booking::STATUS_APPROVED),
-        ])->orderByDesc('approved_count')->get()->map(fn ($lab) => [
+
+$labUsage = Lab::withCount([
+    'bookings as approved_count' => fn ($q) =>
+        $q->where('status', Booking::STATUS_APPROVED)
+            ->when(
+                ! $user->canApprove(),
+                fn ($q) => $q->where('user_id', $user->id)
+            ),
+])->orderByDesc('approved_count')->get()->map(fn ($lab) => [
+
             'id' => $lab->id,
             'name' => $lab->name,
             'code' => $lab->code,
@@ -106,9 +113,11 @@ class DashboardController extends Controller
                 'cancelled' => $cancelledCount,
             ],
             'lab_usage' => $labUsage,
-            'recent_bookings' => BookingResource::collection($recentBookings),
-            'pending_approvals' => BookingResource::collection($pendingApprovals),
-            'upcoming_bookings' => BookingResource::collection($upcomingBookings),
+            // Gunakan map() alih-alih BookingResource::collection() agar data
+            // dikembalikan sebagai array plain, bukan dibungkus { data: [...] }.
+            'recent_bookings' => $recentBookings->map(fn ($b) => new BookingResource($b)),
+            'pending_approvals' => $pendingApprovals->map(fn ($b) => new BookingResource($b)),
+            'upcoming_bookings' => $upcomingBookings->map(fn ($b) => new BookingResource($b)),
             'unread_notifications' => $unreadNotifications,
             'mini_chart_data' => $miniChartData,
         ]);

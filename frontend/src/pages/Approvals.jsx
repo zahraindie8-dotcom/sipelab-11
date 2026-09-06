@@ -135,17 +135,17 @@ export default function Approvals() {
         ) : (
           <ul className="divide-y divide-slate-100">
             {bookings.map((b) => (
-              <li key={b.id} className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between cursor-pointer transition hover:bg-slate-50/70">
+              <li key={b.id} className="flex flex-col gap-3 p-4 sm:p-5 sm:flex-row sm:items-center sm:justify-between cursor-pointer transition hover:bg-slate-50/70">
                 <div className="min-w-0" onClick={() => setDetailTarget(b)}>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-md bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand-700">
                       {b.lab_name}
                     </span>
                     <span className="text-xs text-slate-400">
-                      diminta {b.created_at ? new Date(b.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : '-'}
+                      {b.created_at ? new Date(b.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : '-'}
                     </span>
                   </div>
-                  <p className="mt-2 font-semibold text-slate-700">{b.user_name}</p>
+                  <p className="mt-1.5 font-semibold text-slate-700">{b.user_name}</p>
                   <p className="text-sm text-slate-500">
                     {b.date} · {b.start_time}–{b.end_time}
                   </p>
@@ -160,7 +160,7 @@ export default function Approvals() {
                     </p>
                   )}
                   {b.notes && (
-                    <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                    <p className="mt-1 truncate rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
                       {b.notes}
                     </p>
                   )}

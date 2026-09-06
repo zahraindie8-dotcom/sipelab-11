@@ -107,6 +107,24 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
+
+        // Security audit log - separate channel for security events
+        'security' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/security.log'),
+            'level' => 'info',
+            'days' => 90,  // Keep security logs for 90 days
+            'replace_placeholders' => true,
+        ],
+
+        // Authentication log - login attempts, failures
+        'auth' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/auth.log'),
+            'level' => 'info',
+            'days' => 90,
+            'replace_placeholders' => true,
+        ],
     ],
 
 ];

@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateLabRequest extends FormRequest
 {
@@ -24,11 +23,9 @@ class UpdateLabRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'string', 'max:255'],
-            'code' => ['sometimes', 'string', 'max:20', Rule::unique('labs', 'code')->ignore($this->route('lab'))],
             'capacity' => ['sometimes', 'integer', 'min:1', 'max:500'],
-            'description' => ['nullable', 'string', 'max:1000'],
             'location' => ['nullable', 'string', 'max:255'],
-            'status' => ['sometimes', 'string', 'in:active,maintenance,inactive'],
+            'description' => ['nullable', 'string', 'max:1000'],
         ];
     }
 
@@ -39,9 +36,13 @@ class UpdateLabRequest extends FormRequest
     {
         return [
             'name.string' => 'Nama lab harus berupa teks.',
-            'code.unique' => 'Kode lab sudah digunakan.',
             'capacity.integer' => 'Kapasitas harus berupa angka.',
-            'status.in' => 'Status lab harus active, maintenance, atau inactive.',
+            'capacity.min' => 'Kapasitas minimal 1.',
+            'capacity.max' => 'Kapasitas maksimal 500.',
+            'description.string' => 'Deskripsi harus berupa teks.',
+            'description.max' => 'Deskripsi maksimal 1000 karakter.',
+            'location.string' => 'Lokasi lab harus berupa teks.',
+            'location.max' => 'Lokasi maksimal 255 karakter.',
         ];
     }
 }

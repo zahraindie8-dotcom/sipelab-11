@@ -1,10 +1,14 @@
+import LandingPage from './pages/LandingPage'
+import About from './pages/About'
 import { Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import RoleRoute from './components/RoleRoute'
-import Login from './pages/Login'
-import Register from './pages/Register'
+import Login from './pages/login'
+import Register from './pages/register'
+import VerifyEmail from './pages/VerifyEmail'
+import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
 import Labs from './pages/Labs'
 import NewBooking from './pages/NewBooking'
@@ -15,6 +19,9 @@ import Users from './pages/Users'
 import Analytics from './pages/Analytics'
 import BookingCalendar from './pages/BookingCalendar'
 import Notifications from './pages/Notifications'
+import AuditLogs from './pages/AuditLogs'
+import SystemStatus from './pages/SystemStatus'
+import IPManagement from './pages/IPManagement'
 import NotFound from './pages/NotFound'
 
 function FullScreenLoader() {
@@ -35,12 +42,15 @@ export default function App() {
 
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/about" element={<About />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/labs" element={<Labs />} />
           <Route path="/booking/new" element={<NewBooking />} />
@@ -52,6 +62,9 @@ export default function App() {
           </Route>
           <Route element={<RoleRoute roles={['admin']} />}>
             <Route path="/users" element={<Users />} />
+            <Route path="/audit-logs" element={<AuditLogs />} />
+            <Route path="/system-status" element={<SystemStatus />} />
+            <Route path="/ip-management" element={<IPManagement />} />
           </Route>
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/reports" element={<Reports />} />

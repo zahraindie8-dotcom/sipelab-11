@@ -1,14 +1,19 @@
 <?php
 
 use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\ExportController;
+use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\LabController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\ReportAnalyticsController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\SystemStatusController;
 use App\Http\Controllers\Api\WeeklyRecapController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +28,14 @@ use Illuminate\Support\Facades\Route;
 */
 
 // ============================================================
+// Health Check (publik) — untuk monitoring
+// ============================================================
+Route::get('/health', [HealthController::class, 'index'])->name('api.health');
+Route::get('/health/detailed', [HealthController::class, 'detailed'])->name('api.health.detailed');
+Route::get('/health/ready', [HealthController::class, 'ready'])->name('api.health.ready');
+Route::get('/health/live', [HealthController::class, 'live'])->name('api.health.live');
+
+// ============================================================
 // Autentikasi (publik) — rate limited untuk brute force protection
 // ============================================================
 Route::middleware('throttle.login')->group(function () {
@@ -31,13 +44,33 @@ Route::middleware('throttle.login')->group(function () {
 });
 
 // ============================================================
-// Route yang butuh token Sanctum
+// Verifikasi Email (publik) — rate limited
 // ============================================================
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('throttle.login')->group(function () {
+    Route::post('/email/verify', [EmailVerificationController::class, 'verify'])->name('api.email.verify');
+    Route::post('/email/verification/resend', [EmailVerificationController::class, 'resend'])->name('api.email.verification.resend');
+});
+
+// ============================================================
+// Password Reset (publik) — rate limited
+// ============================================================
+Route::middleware('throttle.login')->group(function () {
+    Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword'])->name('api.forgot-password');
+    Route::post('/verify-reset-code', [PasswordResetController::class, 'verifyCode'])->name('api.verify-reset-code');
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->name('api.reset-password');
+});
+
+// ============================================================
+// Route yang butuh token Sanctum — rate limited untuk brute force protection
+// ============================================================
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 
     // Auth
     Route::get('/user', [AuthController::class, 'user'])->name('api.user');
     Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
+
+    // Email Verification
+    Route::post('/email/verification/send', [EmailVerificationController::class, 'send'])->name('api.email.verification.send');
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('api.dashboard');
@@ -74,6 +107,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reports', [ReportController::class, 'store'])->name('api.reports.store');
     Route::delete('/reports/{report}', [ReportController::class, 'destroy'])->name('api.reports.destroy');
     Route::middleware('role:admin,guru')->get('/reports/all', [ReportController::class, 'all'])->name('api.reports.all');
+    
+    // Report Photo - serve from private storage securely
+    Route::get('/reports/{report}/photo', [ReportController::class, 'showPhoto'])->name('api.reports.photo');
 
     // Analytics — admin, guru, siswa (data di-scoping sesuai role)
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('api.analytics');
@@ -101,5 +137,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::post('/weekly-recap/send', [WeeklyRecapController::class, 'send'])->name('api.weekly-recap.send');
         Route::get('/weekly-recap/preview', [WeeklyRecapController::class, 'preview'])->name('api.weekly-recap.preview');
+    });
+
+    // Audit Logs — hanya admin
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('api.audit-logs.index');
+        Route::get('/audit-logs/stats', [AuditLogController::class, 'stats'])->name('api.audit-logs.stats');
+        Route::get('/audit-logs/export', [AuditLogController::class, 'export'])->name('api.audit-logs.export');
+        Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('api.audit-logs.show');
+    });
+
+    // System Status — hanya admin
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/system/status', [SystemStatusController::class, 'index'])->name('api.system.status');
     });
 });

@@ -30,20 +30,20 @@ export default function BarChart({
 
   if (orientation === 'horizontal') {
     return (
-      <div className="space-y-2">
+      <div className="space-y-1.5 sm:space-y-2">
         {data.map((item, i) => (
-          <div key={i} className="flex items-center gap-3">
-            <span className="w-24 shrink-0 truncate text-right text-xs font-medium text-slate-600">
+          <div key={i} className="flex items-center gap-2 sm:gap-3">
+            <span className="w-16 shrink-0 truncate text-right text-[11px] font-medium text-slate-600 sm:w-24 sm:text-xs">
               {item.label}
             </span>
-            <div className="relative h-6 flex-1 overflow-hidden rounded-full bg-slate-100">
+            <div className="relative h-5 flex-1 overflow-hidden rounded-full bg-slate-100 sm:h-6">
               <div
                 className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out ${item.color || barColor}`}
                 style={{ width: `${Math.max((item.value / max) * 100, 2)}%` }}
               />
             </div>
             {showValues && (
-              <span className="w-8 shrink-0 text-xs font-bold text-slate-600">{item.value}</span>
+              <span className="w-6 shrink-0 text-[10px] font-bold text-slate-600 sm:w-8 sm:text-xs">{item.value}</span>
             )}
           </div>
         ))}

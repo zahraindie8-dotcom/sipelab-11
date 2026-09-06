@@ -20,7 +20,8 @@ class ReportResource extends JsonResource
             'booking_id' => $this->booking_id,
             'user' => new UserResource($this->whenLoaded('user')),
             'photo' => $this->photo,
-            'photo_url' => $this->photo_url,
+            // Gunakan URL API yang aman untuk foto
+            'photo_url' => $this->photo ? url("/api/reports/{$this->id}/photo") : null,
             'description' => $this->description,
             'created_at' => $this->created_at,
         ];

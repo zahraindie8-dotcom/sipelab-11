@@ -118,6 +118,20 @@ export const IconShield = (p) => (
   </svg>
 )
 
+export const IconEye = (p) => (
+  <svg {...base} {...p}>
+    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z" />
+    <circle cx="12" cy="12" r="2.5" />
+  </svg>
+)
+
+export const IconEyeOff = (p) => (
+  <svg {...base} {...p}>
+    <path d="m3 3 18 18M10.6 6.2A10.8 10.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17.7 17.7 0 0 1-3.1 3.8M6.2 6.8C3.9 8.3 2.5 12 2.5 12s3.5 6 9.5 6c1 0 1.9-.2 2.7-.5" />
+    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+  </svg>
+)
+
 export const IconInbox = (p) => (
   <svg {...base} {...p}>
     <path d="M3.5 8 6 4.5h12L20.5 8l1 4v6a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 18v-6z" />
@@ -171,3 +185,29 @@ export const IconDownload = (p) => (
     <path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" />
   </svg>
 )
+export const IconMail = (p) => (
+  <svg {...base} {...p}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="m3 7 9 6 9-6" />
+  </svg>
+)
+export const IconRefresh = (p) => (
+  <svg {...base} {...p}>
+    <path d="M20 11a8 8 0 0 0-14.9-4M4 5v5h5" />
+    <path d="M4 13a8 8 0 0 0 14.9 4M20 19v-5h-5" />
+  </svg>
+)
+export const IconLock = (p) => (
+  <svg {...base} {...p}>
+    <rect x="5" y="10" width="14" height="11" rx="2" />
+    <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    <path d="M12 14v3" />
+  </svg>
+)
+export const IconXCircle = (p) => (
+  <svg {...base} {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m9 9 6 6M15 9l-6 6" />
+  </svg>
+)
+export const IconAdd = IconPlus

@@ -78,7 +78,8 @@ export default function Notifications() {
         {unreadCount > 0 && (
           <button onClick={markAllAsRead} className="btn-secondary">
             <IconCheckCircle className="h-4 w-4" />
-            Tandai Semua Dibaca ({unreadCount})
+            <span className="hidden sm:inline">Tandai Semua Dibaca ({unreadCount})</span>
+            <span className="sm:hidden">Baca Semua ({unreadCount})</span>
           </button>
         )}
       </div>
@@ -101,11 +102,11 @@ export default function Notifications() {
                 <li
                   key={n.id}
                   onClick={() => !n.is_read && markAsRead(n.id)}
-                  className={`flex items-start gap-4 px-5 py-4 transition hover:bg-slate-50/70 cursor-pointer ${
+                  className={`flex items-start gap-3 px-4 py-3 transition hover:bg-slate-50/70 cursor-pointer sm:gap-4 sm:px-5 sm:py-4 ${
                     typeColors[n.type] ?? ''
                   } ${!n.is_read ? 'border-l-4 border-l-brand-500' : ''}`}
                 >
-                  <span className="mt-0.5 text-lg">
+                  <span className="mt-0.5 text-base sm:text-lg">
                     {typeIcons[n.type] ?? '🔔'}
                   </span>
                   <div className="min-w-0 flex-1">

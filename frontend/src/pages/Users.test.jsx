@@ -49,14 +49,15 @@ describe('Users — halaman manajemen user untuk admin', () => {
   it('menampilkan daftar user dari API', async () => {
     renderUsers()
 
-    expect(await screen.findByText('Admin Lab')).toBeInTheDocument()
-    expect(screen.getByText('Bapak Guru')).toBeInTheDocument()
-    expect(screen.getByText('Siswa Contoh')).toBeInTheDocument()
+    const adminElements = await screen.findAllByText('Admin Lab')
+    expect(adminElements).toHaveLength(2)
+    expect(screen.getAllByText('Bapak Guru')).toHaveLength(2)
+    expect(screen.getAllByText('Siswa Contoh')).toHaveLength(2)
   })
 
   it('menampilkan form tambah user saat klik Tambah User', async () => {
     renderUsers()
-    await screen.findByText('Admin Lab')
+    await screen.findAllByText('Admin Lab')
 
     fireEvent.click(screen.getByRole('button', { name: 'Tambah User' }))
 
@@ -77,7 +78,7 @@ describe('Users — halaman manajemen user untuk admin', () => {
     })
 
     renderUsers()
-    await screen.findByText('Admin Lab')
+    await screen.findAllByText('Admin Lab')
 
     fireEvent.click(screen.getByRole('button', { name: 'Tambah User' }))
     fireEvent.change(screen.getByLabelText('Nama Lengkap'), { target: { value: 'Test User' } })
@@ -102,7 +103,7 @@ describe('Users — halaman manajemen user untuk admin', () => {
     })
 
     renderUsers()
-    await screen.findByText('Admin Lab')
+    await screen.findAllByText('Admin Lab')
 
     fireEvent.click(screen.getByRole('button', { name: 'Tambah User' }))
     fireEvent.change(screen.getByLabelText('Nama Lengkap'), { target: { value: LONG_NAME } })
@@ -118,7 +119,7 @@ describe('Users — halaman manajemen user untuk admin', () => {
     client.post.mockResolvedValue({ data: { data: { id: 4 } } })
 
     renderUsers()
-    await screen.findByText('Admin Lab')
+    await screen.findAllByText('Admin Lab')
 
     fireEvent.click(screen.getByRole('button', { name: 'Tambah User' }))
     fireEvent.change(screen.getByLabelText('Nama Lengkap'), { target: { value: 'User Baru' } })
@@ -142,7 +143,7 @@ describe('Users — halaman manajemen user untuk admin', () => {
     }
 
     renderUsers()
-    await screen.findByText('Admin Lab')
+    await screen.findAllByText('Admin Lab')
 
     client.get.mockResolvedValue(onlyGuru)
     fireEvent.click(screen.getByRole('button', { name: 'Guru' }))

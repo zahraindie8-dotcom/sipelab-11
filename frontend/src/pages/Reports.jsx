@@ -65,6 +65,9 @@ export default function Reports() {
   const [printReports, setPrintReports] = useState(null)
   const [printing, setPrinting] = useState(false)
 
+  //Private report photos
+  const [photoUrls, setPhotoUrls] = useState({})
+
   const fetchReports = useCallback(async () => {
     setLoading(true)
     try {
@@ -143,6 +146,33 @@ export default function Reports() {
     }
   }
 
+const loadReportPhoto = useCallback(async (report) => {
+      if (!report?.id) return null
+
+      // Jika sudah pernah dimuat, gunakan URL yang sudah ada.
+      if (photoUrls[report.id]) {
+        return photoUrls[report.id]
+      }
+
+      try {
+        const response = await client.get(`/reports/${report.id}/photo`, {
+          responseType: 'blob',
+        })
+
+        const url = URL.createObjectURL(response.data)
+
+        setPhotoUrls((prev) => ({
+          ...prev,
+          [report.id]: url,
+        }))
+
+        return url
+      } catch (err) {
+        toast(extractError(err), 'error')
+        return null
+      }
+}, [photoUrls, toast])
+
   const removeReport = async (r) => {
     if (!window.confirm('Hapus laporan ini?')) return
     try {
@@ -203,7 +233,7 @@ export default function Reports() {
             Bukti foto & deskripsi aktivitas penggunaan lab
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <DateRangeFilter
             filters={filters}
             onChange={setFilters}
@@ -217,15 +247,18 @@ export default function Reports() {
             className="btn-secondary"
           >
             <IconDownload className="h-4 w-4" />
-            Export CSV
+            <span className="hidden sm:inline">Export CSV</span>
+            <span className="sm:hidden">Export</span>
           </a>
           <button onClick={handlePrint} disabled={printing} className="btn-secondary">
             <IconPrinter className="h-4 w-4" />
-            {printing ? 'Memuat...' : 'Cetak Laporan'}
+            <span className="hidden sm:inline">{printing ? 'Memuat...' : 'Cetak Laporan'}</span>
+            <span className="sm:hidden">Cetak</span>
           </button>
           <button onClick={openUpload} className="btn-primary">
             <IconPlus className="h-4 w-4" />
-            Upload Laporan
+            <span className="hidden sm:inline">Upload Laporan</span>
+            <span className="sm:hidden">Upload</span>
           </button>
         </div>
       </div>
@@ -375,24 +408,34 @@ export default function Reports() {
           <>
             <ul className="divide-y divide-slate-100">
               {reports.map((r) => (
-                <li key={r.id} className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+                <li key={r.id} className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4">
                   {r.photo_url ? (
-                    <a
-                      href={r.photo_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block shrink-0 overflow-hidden rounded-xl ring-1 ring-slate-200 transition hover:ring-brand-400"
-                      title="Lihat foto asli"
-                    >
-                      <img
-                        src={r.photo_url}
-                        alt="Bukti penggunaan lab"
-                        className="h-24 w-36 object-cover"
-                      />
-                    </a>
+                    <button
+                        type="button"
+                        onClick={async () => {
+                          const url = await loadReportPhoto(r)
+                          if (url) {
+                            window.open(url, '_blank', 'noopener,noreferrer')
+                          }
+                        }}
+                        className="block shrink-0 overflow-hidden rounded-xl ring-1 ring-slate-200 transition hover:ring-brand-400"
+                        title="Lihat foto asli"
+                      >
+                        {photoUrls[r.id] ? (
+                          <img
+                            src={photoUrls[r.id]}
+                            alt="Bukti penggunaan lab"
+                            className="h-20 w-28 object-cover sm:h-24 sm:w-36"
+                          />
+                        ) : (
+                          <div className="flex h-20 w-28 items-center justify-center bg-slate-100 text-xs text-slate-400 sm:h-24 sm:w-36">
+                            Memuat...
+                          </div>
+                        )}
+                      </button>
                   ) : (
-                    <div className="flex h-24 w-36 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
-                      <IconCamera className="h-8 w-8" />
+                    <div className="flex h-20 w-28 items-center justify-center rounded-xl bg-slate-100 text-slate-400 sm:h-24 sm:w-36">
+                      <IconCamera className="h-6 w-6 sm:h-8 sm:w-8" />
                     </div>
                   )}
                   <div className="min-w-0 flex-1">

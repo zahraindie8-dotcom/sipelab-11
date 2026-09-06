@@ -2,9 +2,19 @@ import axios from 'axios'
 
 const TOKEN_KEY = 'sipelab_token'
 
-export const getToken = () => localStorage.getItem(TOKEN_KEY)
-export const setToken = (token) => localStorage.setItem(TOKEN_KEY, token)
-export const clearToken = () => localStorage.removeItem(TOKEN_KEY)
+export const getToken = () =>
+  sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY)
+
+export const setToken = (token, remember = false) => {
+  clearToken()
+  const storage = remember ? localStorage : sessionStorage
+  storage.setItem(TOKEN_KEY, token)
+}
+
+export const clearToken = () => {
+  localStorage.removeItem(TOKEN_KEY)
+  sessionStorage.removeItem(TOKEN_KEY)
+}
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',

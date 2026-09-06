@@ -57,7 +57,7 @@ describe('Labs — pesan error validasi form tampil ke pengguna', () => {
     })
 
     renderLabs()
-    await screen.findByText('Lab Komputer 1')
+    await screen.findAllByText('Lab Komputer 1')
 
     fireEvent.click(screen.getByRole('button', { name: 'Tambah Lab' }))
     fireEvent.change(screen.getByLabelText('Nama Lab'), { target: { value: LONG_NAME } })
@@ -81,9 +81,9 @@ describe('Labs — pesan error validasi form tampil ke pengguna', () => {
     })
 
     renderLabs()
-    await screen.findByText('Lab Komputer 1')
+    await screen.findAllByText('Lab Komputer 1')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edit Lab Komputer 1' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit Lab Komputer 1' })[0])
     fireEvent.change(screen.getByLabelText('Nama Lab'), { target: { value: LONG_NAME } })
     await submitModal('Simpan Perubahan')
 
@@ -95,7 +95,7 @@ describe('Labs — pesan error validasi form tampil ke pengguna', () => {
     client.post.mockResolvedValue({ data: { data: { id: 2 } } })
 
     renderLabs()
-    await screen.findByText('Lab Komputer 1')
+    await screen.findAllByText('Lab Komputer 1')
 
     fireEvent.click(screen.getByRole('button', { name: 'Tambah Lab' }))
     fireEvent.change(screen.getByLabelText('Nama Lab'), { target: { value: 'Lab Baru' } })

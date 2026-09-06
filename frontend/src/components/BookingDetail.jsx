@@ -10,7 +10,7 @@ const roleBadge = {
 function InfoRow({ label, children }) {
   return (
     <div className="flex items-start gap-3 py-2.5">
-      <span className="w-28 shrink-0 text-xs font-semibold uppercase tracking-wider text-slate-400">
+      <span className="w-20 shrink-0 text-[11px] font-semibold uppercase tracking-wider text-slate-400 sm:w-28 sm:text-xs">
         {label}
       </span>
       <div className="flex-1 text-sm text-slate-700">{children}</div>

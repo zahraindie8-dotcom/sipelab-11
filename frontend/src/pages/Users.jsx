@@ -4,7 +4,7 @@ import { useToast } from '../context/ToastContext'
 import Modal from '../components/Modal'
 import Pagination from '../components/Pagination'
 import EmptyState from '../components/EmptyState'
-import { IconPlus, IconSearch, IconTrash, IconEdit, IconUsers, IconShield } from '../components/icons'
+import { IconEye, IconEyeOff, IconPlus, IconSearch, IconTrash, IconEdit, IconUsers, IconShield } from '../components/icons'
 
 const emptyForm = { name: '', email: '', password: '', password_confirmation: '', role: 'siswa' }
 
@@ -42,6 +42,7 @@ export default function Users() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState(null)
+  const [visiblePasswords, setVisiblePasswords] = useState({ password: false, confirmation: false })
 
   const [deleting, setDeleting] = useState(null)
 
@@ -73,6 +74,7 @@ export default function Users() {
     setEditing(null)
     setForm(emptyForm)
     setFormError(null)
+    setVisiblePasswords({ password: false, confirmation: false })
     setModalOpen(true)
   }
 
@@ -86,6 +88,7 @@ export default function Users() {
       role: user.role,
     })
     setFormError(null)
+    setVisiblePasswords({ password: false, confirmation: false })
     setModalOpen(true)
   }
 
@@ -198,8 +201,9 @@ export default function Users() {
           />
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px]">
+            {/* Desktop table */}
+            <div className="hidden overflow-x-auto sm:block">
+              <table className="w-full min-w-[560px]">
                 <thead className="border-b border-slate-100 bg-slate-50">
                   <tr>
                     <th className="table-head">Nama</th>
@@ -264,6 +268,48 @@ export default function Users() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile card view */}
+            <div className="divide-y divide-slate-100 sm:hidden">
+              {users.map((u) => (
+                <div key={u.id} className="flex items-center gap-3 p-4 transition hover:bg-slate-50/70">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600">
+                    {u.name?.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold text-slate-700">{u.name}</span>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset ${
+                          roleBadge[u.role] ?? 'bg-slate-100 text-slate-600 ring-slate-200'
+                        }`}
+                      >
+                        <IconShield className="h-2.5 w-2.5" />
+                        {u.role_label ?? u.role}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-xs text-slate-500">{u.email}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      onClick={() => openEdit(u)}
+                      className="rounded-lg p-2 text-slate-400 transition hover:bg-brand-50 hover:text-brand-600"
+                      aria-label={`Edit ${u.name}`}
+                    >
+                      <IconEdit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(u)}
+                      disabled={deleting === u.id}
+                      className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                      aria-label={`Hapus ${u.name}`}
+                    >
+                      <IconTrash className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
             <Pagination meta={meta} onChange={setPage} />
           </>
         )}
@@ -317,30 +363,50 @@ export default function Users() {
               <label className="label" htmlFor="user-password">
                 Password {editing && <span className="font-normal text-slate-400">(kosongkan jika tidak ubah)</span>}
               </label>
-              <input
-                id="user-password"
-                type="password"
-                className="input"
-                placeholder={editing ? '••••••••' : 'Minimal 8 karakter'}
-                minLength={8}
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                required={!editing}
-              />
+              <div className="relative">
+                <input
+                  id="user-password"
+                  type={visiblePasswords.password ? 'text' : 'password'}
+                  className="input pr-11"
+                  placeholder={editing ? '••••••••' : 'Minimal 8 karakter'}
+                  minLength={8}
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  required={!editing}
+                />
+                <button
+                  type="button"
+                  onClick={() => setVisiblePasswords((current) => ({ ...current, password: !current.password }))}
+                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 hover:text-slate-700"
+                  aria-label={visiblePasswords.password ? 'Sembunyikan password' : 'Tampilkan password'}
+                >
+                  {visiblePasswords.password ? <IconEyeOff className="h-5 w-5" /> : <IconEye className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
             <div>
               <label className="label" htmlFor="user-password-confirm">
                 Konfirmasi Password
               </label>
-              <input
-                id="user-password-confirm"
-                type="password"
-                className="input"
-                placeholder="Ulangi password"
-                value={form.password_confirmation}
-                onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })}
-                required={!editing && form.password !== ''}
-              />
+              <div className="relative">
+                <input
+                  id="user-password-confirm"
+                  type={visiblePasswords.confirmation ? 'text' : 'password'}
+                  className="input pr-11"
+                  placeholder="Ulangi password"
+                  value={form.password_confirmation}
+                  onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })}
+                  required={!editing && form.password !== ''}
+                />
+                <button
+                  type="button"
+                  onClick={() => setVisiblePasswords((current) => ({ ...current, confirmation: !current.confirmation }))}
+                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 hover:text-slate-700"
+                  aria-label={visiblePasswords.confirmation ? 'Sembunyikan password' : 'Tampilkan password'}
+                >
+                  {visiblePasswords.confirmation ? <IconEyeOff className="h-5 w-5" /> : <IconEye className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
           </div>
 

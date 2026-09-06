@@ -35,10 +35,20 @@ class ReportAnalyticsController extends Controller
         // ============================================================
         // 1. Summary
         // ============================================================
-        $totalReports = (clone $baseQuery)->count();
-        $totalBookings = Booking::count();
-        $totalApproved = Booking::where('status', Booking::STATUS_APPROVED)->count();
-        $reportsWithPhotos = (clone $baseQuery)->whereNotNull('photo')->count();
+            $totalReports = (clone $baseQuery)->count();
+
+            $bookingQuery = Booking::query()
+                ->when(! $user->canApprove(), fn ($q) => $q->where('user_id', $user->id));
+
+            $totalBookings = (clone $bookingQuery)->count();
+
+            $totalApproved = (clone $bookingQuery)
+                ->where('status', Booking::STATUS_APPROVED)
+                ->count();
+
+            $reportsWithPhotos = (clone $baseQuery)
+                ->whereNotNull('photo')
+                ->count();
 
         // ============================================================
         // 2. Laporan per bulan (N bulan terakhir)

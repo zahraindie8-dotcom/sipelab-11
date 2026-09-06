@@ -149,7 +149,7 @@ export default function Bookings() {
               : 'Riwayat booking lab Anda'}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {isApprover && (
             <a
               href={`/api/export/bookings${status ? `?status=${status}` : ''}${filters.date_from ? `${status ? '&' : '?'}date_from=${filters.date_from}` : ''}${filters.date_to ? `${status || filters.date_from ? '&' : '?'}date_to=${filters.date_to}` : ''}${filters.lab_id ? `${status || filters.date_from || filters.date_to ? '&' : '?'}lab_id=${filters.lab_id}` : ''}`}
@@ -158,12 +158,14 @@ export default function Bookings() {
               className="btn-secondary"
             >
               <IconDownload className="h-4 w-4" />
-              Export CSV
+              <span className="hidden sm:inline">Export CSV</span>
+              <span className="sm:hidden">Export</span>
             </a>
           )}
           <Link to="/booking/new" className="btn-primary">
             <IconPlus className="h-4 w-4" />
-            Booking Lab
+            <span className="hidden sm:inline">Booking Lab</span>
+            <span className="sm:hidden">Booking</span>
           </Link>
         </div>
       </div>
@@ -262,8 +264,9 @@ export default function Bookings() {
           />
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px]">
+            {/* Desktop table */}
+            <div className="hidden overflow-x-auto sm:block">
+              <table className="w-full min-w-[600px]">
                 <thead className="border-b border-slate-100 bg-slate-50">
                   <tr>
                     <th className="table-head">Lab</th>
@@ -274,7 +277,8 @@ export default function Bookings() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {bookings.map((b) => (                      <tr
+                  {bookings.map((b) => (
+                    <tr
                       key={b.id}
                       onClick={() => setDetailTarget(b)}
                       className={`cursor-pointer transition hover:bg-slate-50/70 ${
@@ -343,6 +347,74 @@ export default function Bookings() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile card view */}
+            <div className="divide-y divide-slate-100 sm:hidden">
+              {bookings.map((b) => (
+                <div
+                  key={b.id}
+                  onClick={() => setDetailTarget(b)}
+                  className={`cursor-pointer p-4 transition hover:bg-slate-50/70 ${
+                    highlightId === b.id ? 'bg-brand-50/70' : ''
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold text-slate-700">{b.lab_name}</span>
+                        <StatusBadge status={b.status} />
+                      </div>
+                      {isApprover && (
+                        <p className="mt-1 text-xs text-slate-500">oleh {b.user_name}</p>
+                      )}
+                      <p className="mt-1 text-xs text-slate-500">
+                        📅 {b.date} · 🕐 {b.start_time}–{b.end_time}
+                      </p>
+                      {b.notes && (
+                        <p className="mt-1 truncate text-xs text-slate-400">{b.notes}</p>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      {isApprover && b.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); approve(b) }}
+                            disabled={processing}
+                            className="rounded-lg bg-emerald-50 p-2 text-emerald-600 transition hover:bg-emerald-100 disabled:opacity-50"
+                            title="Setujui"
+                          >
+                            <IconCheckCircle className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setReason('')
+                              setRejectTarget(b)
+                            }}
+                            disabled={processing}
+                            className="rounded-lg bg-rose-50 p-2 text-rose-600 transition hover:bg-rose-100 disabled:opacity-50"
+                            title="Tolak"
+                          >
+                            <IconX className="h-4 w-4" />
+                          </button>
+                        </>
+                      )}
+                      {(user?.id === b.user?.id || user?.role === 'admin') &&
+                        b.status === 'pending' && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); cancelBooking(b) }}
+                            disabled={processing}
+                            className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                            title="Batalkan booking"
+                          >
+                            <IconTrash className="h-4 w-4" />
+                          </button>
+                        )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
             <Pagination meta={meta} onChange={setPage} />
           </>

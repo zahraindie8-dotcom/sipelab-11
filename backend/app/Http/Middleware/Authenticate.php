@@ -12,9 +12,10 @@ class Authenticate extends Middleware
      */
     protected function redirectTo(Request $request): ?string
     {
-        // Untuk request API, jangan redirect — biarkan middleware mengembalikan 401.
-        if (! $request->expectsJson()) {
-            return route('login');
+        // Semua request API tidak boleh diarahkan ke route login web.
+        // Biarkan Laravel mengembalikan response 401 Unauthorized.
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return null;
         }
 
         return null;

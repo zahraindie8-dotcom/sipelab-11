@@ -69,7 +69,7 @@ export default function DateRangeFilter({ filters, onChange, open, onToggle }) {
           {/* Quick Presets */}
           <div className="mb-4">
             <label className="label">Preset Cepat</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {presets.map((preset) => {
                 const range = preset.getRange()
                 const isCurrentPreset =

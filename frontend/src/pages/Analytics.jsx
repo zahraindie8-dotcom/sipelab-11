@@ -133,7 +133,7 @@ export default function Analytics() {
           <h1 className="text-xl font-bold text-slate-800">{labels.title}</h1>
           <p className="text-sm text-slate-500">{labels.subtitle}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <DateRangeFilter
             filters={filters}
             onChange={setFilters}
@@ -147,7 +147,8 @@ export default function Analytics() {
             className="btn-secondary"
           >
             <IconDownload className="h-4 w-4" />
-            Export CSV
+            <span className="hidden sm:inline">Export CSV</span>
+            <span className="sm:hidden">Export</span>
           </a>
         </div>
       </div>

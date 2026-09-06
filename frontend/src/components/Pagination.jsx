@@ -4,7 +4,7 @@ export default function Pagination({ meta, onChange }) {
   const { current_page: current, last_page: last } = meta
 
   return (
-    <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3">
+    <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-xs text-slate-500">
         Menampilkan {meta.from ?? 0}–{meta.to ?? 0} dari {meta.total} data
       </p>
@@ -14,7 +14,8 @@ export default function Pagination({ meta, onChange }) {
           disabled={current <= 1}
           onClick={() => onChange(current - 1)}
         >
-          Sebelumnya
+          <span className="hidden sm:inline">Sebelumnya</span>
+          <span className="sm:hidden">← Prev</span>
         </button>
         <span className="px-2 text-xs font-semibold text-slate-600">
           {current} / {last}
@@ -24,7 +25,8 @@ export default function Pagination({ meta, onChange }) {
           disabled={current >= last}
           onClick={() => onChange(current + 1)}
         >
-          Berikutnya
+          <span className="hidden sm:inline">Berikutnya</span>
+          <span className="sm:hidden">Next →</span>
         </button>
       </div>
     </div>

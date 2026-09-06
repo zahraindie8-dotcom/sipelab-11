@@ -17,22 +17,21 @@ export function AuthProvider({ children }) {
 
     client
       .get('/user')
-      .then((res) => setUser(res.data))
+      .then((res) => setUser(res.data.data))
       .catch(() => clearToken())
       .finally(() => setLoading(false))
   }, [])
 
   const login = useCallback(async (email, password, remember = false) => {
     const { data } = await client.post('/login', { email, password, remember })
-    setToken(data.token)
+    setToken(data.token, remember)
     setUser(data.user)
     return data.user
   }, [])
 
   const register = useCallback(async (payload) => {
     const { data } = await client.post('/register', payload)
-    setToken(data.token)
-    setUser(data.user)
+    // Registration doesn't return token anymore (email verification required)
     return data.user
   }, [])
 
@@ -46,8 +45,35 @@ export function AuthProvider({ children }) {
     setUser(null)
   }, [])
 
+  const verifyEmail = useCallback(async (email, token) => {
+    const { data } = await client.post('/email/verify', { email, token })
+    return data
+  }, [])
+
+  const sendVerificationEmail = useCallback(async () => {
+    const { data } = await client.post('/email/verification/send')
+    return data
+  }, [])
+
+  const resendVerificationEmail = useCallback(async (email) => {
+    const { data } = await client.post('/email/verification/resend', { email })
+    return data
+  }, [])
+
+  const isEmailVerified = user?.email_verified_at !== null
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      register, 
+      logout,
+      verifyEmail,
+      sendVerificationEmail,
+      resendVerificationEmail,
+      isEmailVerified
+    }}>
       {children}
     </AuthContext.Provider>
   )

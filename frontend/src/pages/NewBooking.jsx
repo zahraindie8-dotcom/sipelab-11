@@ -76,7 +76,7 @@ export default function NewBooking() {
         delete payload.participant_count
       }
       const res = await client.post('/bookings', payload)
-      toast('Booking berhasil dibuat. Menunggu persetujuan.')
+      toast('Booking berhasil diajukan! Pengajuan booking berhasil dikirim dan sedang menunggu persetujuan admin/guru.')
       navigate('/bookings', { state: { highlight: res.data.data?.id } })
     } catch (err) {
       setError(extractError(err))
@@ -86,7 +86,7 @@ export default function NewBooking() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-4 sm:space-y-6">
       <div>
         <h1 className="text-xl font-bold text-slate-800">Booking Lab</h1>
         <p className="text-sm text-slate-500">
@@ -295,10 +295,8 @@ export default function NewBooking() {
         </form>
       </div>
 
-      <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
-        💡 <span className="font-semibold">Tips:</span> Sistem otomatis memeriksa bentrok jadwal
-        di lab yang sama pada tanggal yang sama. Jika bentrok, permintaan Anda akan ditolak
-        otomatis.
+      <div className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-xs text-sky-700 sm:px-4 sm:py-3 sm:text-sm">
+        💡 <span className="font-semibold">Tips:</span> Sistem otomatis memeriksa bentrok jadwal di lab yang sama pada tanggal yang sama.
       </div>
     </div>
   )

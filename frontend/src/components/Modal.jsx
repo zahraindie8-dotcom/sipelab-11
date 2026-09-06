@@ -18,17 +18,21 @@ export default function Modal({ open, onClose, title, children, size = 'md' }) {
   const sizes = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl' }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center px-0 sm:items-center sm:px-4">
       <div
         className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-[fadeIn_.15s_ease-out]"
         onClick={onClose}
       />
       <div
-        className={`relative z-10 w-full ${sizes[size]} rounded-t-2xl bg-white shadow-lift sm:rounded-2xl animate-[popIn_.18s_ease-out]`}
+        className={`relative z-10 w-full ${sizes[size]} max-h-[90vh] rounded-t-2xl bg-white shadow-lift sm:max-h-[85vh] sm:rounded-2xl animate-[popIn_.18s_ease-out]`}
         role="dialog"
         aria-modal="true"
       >
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+        {/* Drag handle on mobile */}
+        <div className="flex justify-center pt-3 sm:hidden">
+          <div className="h-1 w-10 rounded-full bg-slate-300" />
+        </div>
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-6 sm:py-4">
           <h3 className="text-base font-semibold text-slate-800">{title}</h3>
           <button
             onClick={onClose}
@@ -38,7 +42,7 @@ export default function Modal({ open, onClose, title, children, size = 'md' }) {
             <IconX className="h-5 w-5" />
           </button>
         </div>
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-5">{children}</div>
+        <div className="max-h-[60vh] overflow-y-auto px-4 py-4 sm:max-h-[70vh] sm:px-6 sm:py-5">{children}</div>
       </div>
       <style>{`@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes popIn { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>

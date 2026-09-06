@@ -126,11 +126,11 @@ export default function BookingCalendar() {
 
       {/* Filter & Navigation */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-1 sm:justify-start sm:gap-2">
           <button onClick={prevMonth} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
             <IconChevronLeft className="h-5 w-5" />
           </button>
-          <h2 className="min-w-[180px] text-center text-lg font-bold text-slate-700">
+          <h2 className="min-w-[140px] text-center text-base font-bold text-slate-700 sm:min-w-[180px] sm:text-lg">
             {MONTH_NAMES[currentDate.getMonth()]} {currentDate.getFullYear()}
           </h2>
           <button onClick={nextMonth} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
@@ -142,7 +142,7 @@ export default function BookingCalendar() {
         </div>
 
         <select
-          className="input max-w-[200px]"
+          className="input max-w-full sm:max-w-[200px]"
           value={selectedLab}
           onChange={(e) => setSelectedLab(e.target.value)}
         >
@@ -166,7 +166,7 @@ export default function BookingCalendar() {
             {/* Day headers */}
             <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
               {DAY_NAMES.map((day) => (
-                <div key={day} className="p-3 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
+                <div key={day} className="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:p-3 sm:text-xs">
                   {day}
                 </div>
               ))}
@@ -177,35 +177,35 @@ export default function BookingCalendar() {
               {calendarDays.map((day, idx) => (
                 <div
                   key={idx}
-                  className={`min-h-[100px] border-b border-r border-slate-100 p-1.5 ${
+                  className={`min-h-[60px] border-b border-r border-slate-100 p-0.5 sm:min-h-[100px] sm:p-1.5 ${
                     day.date ? 'bg-white hover:bg-slate-50/50' : 'bg-slate-50'
                   } ${day.isToday ? 'ring-2 ring-inset ring-brand-400' : ''}`}
                 >
                   {day.date && (
                     <>
                       <div
-                        className={`mb-1 text-right text-sm font-semibold ${
+                        className={`mb-0.5 text-right text-xs font-semibold sm:mb-1 sm:text-sm ${
                           day.isToday ? 'text-brand-600' : 'text-slate-600'
                         }`}
                       >
                         {day.date}
                       </div>
-                      <div className="space-y-1">
-                        {day.bookings.slice(0, 3).map((b) => (
+                      <div className="space-y-0.5 sm:space-y-1">
+                        {day.bookings.slice(0, 2).map((b) => (
                           <button
                             key={b.id}
                             onClick={() => setDetailTarget(b)}
-                            className={`block w-full truncate rounded border px-1.5 py-0.5 text-left text-[10px] font-semibold transition hover:shadow-sm ${
+                            className={`block w-full truncate rounded border px-1 py-px text-left text-[8px] font-semibold transition hover:shadow-sm sm:px-1.5 sm:py-0.5 sm:text-[10px] ${
                               statusColors[b.status] ?? 'bg-slate-100 text-slate-600'
                             }`}
                             title={`${b.lab_name} · ${b.start_time}-${b.end_time}`}
                           >
-                            {b.start_time?.slice(0, 5)} {b.lab_name}
+                            <span className="hidden sm:inline">{b.start_time?.slice(0, 5)} </span>{b.lab_name}
                           </button>
                         ))}
-                        {day.bookings.length > 3 && (
-                          <p className="text-center text-[10px] font-semibold text-slate-400">
-                            +{day.bookings.length - 3} lagi
+                        {day.bookings.length > 2 && (
+                          <p className="text-center text-[8px] font-semibold text-slate-400 sm:text-[10px]">
+                            +{day.bookings.length - 2} lagi
                           </p>
                         )}
                       </div>
@@ -219,11 +219,11 @@ export default function BookingCalendar() {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+      <div className="flex flex-wrap items-center gap-2 gap-y-1 text-[11px] text-slate-500 sm:gap-4 sm:text-xs">
         <span className="font-semibold">Legenda:</span>
         {Object.entries(statusColors).map(([status, color]) => (
-          <div key={status} className="flex items-center gap-1.5">
-            <span className={`h-3 w-3 rounded border ${color}`} />
+          <div key={status} className="flex items-center gap-1">
+            <span className={`h-2.5 w-2.5 rounded border sm:h-3 sm:w-3 ${color}`} />
             <span className="capitalize">{status === 'pending' ? 'Menunggu' : status === 'approved' ? 'Disetujui' : status === 'rejected' ? 'Ditolak' : status === 'cancelled' ? 'Dibatalkan' : 'Selesai'}</span>
           </div>
         ))}

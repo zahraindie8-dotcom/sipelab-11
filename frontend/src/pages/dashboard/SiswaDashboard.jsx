@@ -25,7 +25,7 @@ export default function SiswaDashboard({ data = {}, user }) {
   return (
     <div className="space-y-6">
       {/* Banner sambutan */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-slate-900 p-6 text-white shadow-lift sm:p-8">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-slate-900 p-4 text-white shadow-lift sm:p-8">
         <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-16 right-24 h-40 w-40 rounded-full bg-brand-400/20 blur-2xl" />
         <div className="relative">
@@ -48,7 +48,7 @@ export default function SiswaDashboard({ data = {}, user }) {
       </div>
 
       {/* Kartu statistik pribadi */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           icon={IconCalendar}
           label="Booking Saya"
