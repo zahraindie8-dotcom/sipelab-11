@@ -66,32 +66,48 @@ class AuthController extends Controller
     /**
      * Register akun baru (role otomatis: siswa).
      */
-    public function register(RegisterRequest $request)
-    {
-        $validated = $request->validated();
+public function register(RegisterRequest $request)
+{
+    $validated = $request->validated();
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'username' => $validated['username'],
-            'email' => $validated['email'],
-            'password' => $validated['password'],
-            'role' => $validated['role'],
-        ]);
+    $username = $validated['username'] ?? \Illuminate\Support\Str::before(
+        $validated['email'],
+        '@'
+    );
 
-        // Kirim email verifikasi
-        try {
-            $token = \Illuminate\Support\Str::random(6);
-            $user->update(['remember_token' => $token]);
-            \Mail::to($user->email)->send(new \App\Mail\VerifyEmail($user, $token));
-        } catch (\Exception $e) {
-            \Log::warning('Gagal mengirim email verifikasi: ' . $e->getMessage());
-        }
+    $username = preg_replace('/[^A-Za-z0-9_-]/', '', $username);
+    $username = substr($username ?: 'user', 0, 50);
 
-        return response()->json([
-            'message' => 'Registrasi berhasil. Silakan cek email Anda untuk kode verifikasi.',
-            'user' => new UserResource($user),
-        ], 201);
+    $baseUsername = $username;
+    $counter = 1;
+
+    while (User::where('username', $username)->exists()) {
+        $suffix = (string) $counter++;
+        $username = substr($baseUsername, 0, 50 - strlen($suffix)) . $suffix;
     }
+
+    $user = User::create([
+        'name' => $validated['name'],
+        'username' => $username,
+        'email' => $validated['email'],
+        'password' => $validated['password'],
+        'role' => $validated['role'] ?? 'siswa',
+    ]);
+
+    // Kirim email verifikasi
+    try {
+        $token = \Illuminate\Support\Str::random(6);
+        $user->update(['remember_token' => $token]);
+        \Mail::to($user->email)->send(new \App\Mail\VerifyEmail($user, $token));
+    } catch (\Exception $e) {
+        \Log::warning('Gagal mengirim email verifikasi: ' . $e->getMessage());
+    }
+
+    return response()->json([
+        'message' => 'Registrasi berhasil. Silakan cek email Anda untuk kode verifikasi.',
+        'user' => new UserResource($user),
+    ], 201);
+}
 
     /**
      * Data user yang sedang login.

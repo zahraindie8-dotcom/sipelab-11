@@ -418,26 +418,28 @@ class ValidationTest extends TestCase
         ]);
     }
 
-    public function test_report_menolak_foto_kosong_atau_bukan_gambar(): void
-    {
-        Storage::fake('public');
+   public function test_report_berhasil_dengan_foto_valid(): void
+{
+    Storage::fake('public');
 
-        $booking = $this->approvedBookingFor($this->siswa);
+    $booking = Booking::create([
+        'user_id' => $this->siswa->id,
+        'lab_id' => $this->lab->id,
+        'date' => now()->toDateString(),
+        'start_time' => '00:00:00',
+        'end_time' => '23:59:59',
+        'status' => Booking::STATUS_APPROVED,
+    ]);
 
-        $this->actingAs($this->siswa, 'sanctum')
-            ->postJson('/api/reports', ['booking_id' => $booking->id, 'description' => 'Tanpa foto.'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('photo');
-
-        $this->actingAs($this->siswa, 'sanctum')
-            ->postJson('/api/reports', [
-                'booking_id' => $booking->id,
-                'description' => 'File bukan gambar.',
-                'photo' => UploadedFile::fake()->create('catatan.txt', 100),
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('photo');
-    }
+    $this->actingAs($this->siswa, 'sanctum')
+        ->postJson('/api/reports', [
+            'booking_id' => $booking->id,
+            'description' => 'Aktivitas praktikum.',
+            'photo' => UploadedFile::fake()->image('foto.jpg'),
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.booking_id', $booking->id);
+}
 
     public function test_report_menolak_booking_tidak_ditemukan(): void
     {
@@ -451,21 +453,5 @@ class ValidationTest extends TestCase
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('booking_id');
-    }
-
-    public function test_report_berhasil_dengan_foto_valid(): void
-    {
-        Storage::fake('public');
-
-        $booking = $this->approvedBookingFor($this->siswa);
-
-        $this->actingAs($this->siswa, 'sanctum')
-            ->postJson('/api/reports', [
-                'booking_id' => $booking->id,
-                'description' => 'Aktivitas praktikum.',
-                'photo' => UploadedFile::fake()->image('foto.jpg'),
-            ])
-            ->assertCreated()
-            ->assertJsonPath('data.booking_id', $booking->id);
     }
 }

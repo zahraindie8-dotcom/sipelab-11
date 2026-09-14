@@ -2,16 +2,23 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import client, { extractError } from '../api/client'
 import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/AuthContext'
 import { IconCalendar, IconFlask, IconPlus, IconUsers, IconCheckCircle, IconX } from '../components/icons'
 
 export default function NewBooking() {
   const { toast } = useToast()
+  const { user } = useAuth()
   const navigate = useNavigate()
-
+  
+  const isGuru = user?.role === 'guru'
+  
   const [labs, setLabs] = useState([])
   const [form, setForm] = useState({
     lab_id: '',
+    kelas: '',
+    jurusan: '',
     date: '',
+    date_display: '',
     start_time: '08:00',
     end_time: '10:00',
     purpose: '',
@@ -64,6 +71,48 @@ export default function NewBooking() {
     return () => clearTimeout(timer)
   }, [form.lab_id, form.date, form.start_time, form.end_time])
 
+  const formatDateDisplay = (value) => {
+    if (!value) return ''
+    const [year, month, day] = value.split('-')
+    return `${day}/${month}/${year}`
+  }
+
+    const handleDateChange = (value) => {
+      const digits = value.replace(/\D/g, '').slice(0, 8)
+
+      let display = digits
+      if (digits.length > 2) {
+        display = `${digits.slice(0, 2)}/${digits.slice(2)}`
+      }
+      if (digits.length > 4) {
+        display = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`
+      }
+
+      let isoDate = ''
+
+      if (digits.length === 8) {
+        const day = digits.slice(0, 2)
+        const month = digits.slice(2, 4)
+        const year = digits.slice(4, 8)
+
+        const date = new Date(Number(year), Number(month) - 1, Number(day))
+
+        if (
+          date.getFullYear() === Number(year) &&
+          date.getMonth() === Number(month) - 1 &&
+          date.getDate() === Number(day)
+        ) {
+          isoDate = `${year}-${month}-${day}`
+        }
+      }
+
+      setForm({
+        ...form,
+        date: isoDate,
+        date_display: display,
+      })
+    }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitting(true)
@@ -76,7 +125,7 @@ export default function NewBooking() {
         delete payload.participant_count
       }
       const res = await client.post('/bookings', payload)
-      toast('Booking berhasil diajukan! Pengajuan booking berhasil dikirim dan sedang menunggu persetujuan admin/guru.')
+      toast('Borrowing berhasil diajukan! Pengajuan borrowing berhasil dikirim dan sedang menunggu persetujuan admin/guru.')
       navigate('/bookings', { state: { highlight: res.data.data?.id } })
     } catch (err) {
       setError(extractError(err))
@@ -88,10 +137,12 @@ export default function NewBooking() {
   return (
     <div className="mx-auto max-w-2xl space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-slate-800">Booking Lab</h1>
-        <p className="text-sm text-slate-500">
-          Ajukan peminjaman lab. Booking perlu disetujui admin/guru terlebih dahulu.
-        </p>
+        <h1 className="text-xl font-bold text-slate-800">Borrowing Lab</h1>
+          {user?.role === 'siswa' && (
+            <p className="text-sm text-slate-500">
+              Ajukan peminjaman lab. Borrowing perlu disetujui admin/guru terlebih dahulu.
+            </p>
+          )}
       </div>
 
       <div className="card p-6">
@@ -126,6 +177,41 @@ export default function NewBooking() {
             </div>
           </div>
 
+          {/* Kelas & Jurusan */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label" htmlFor="bk-kelas">
+                Kelas
+              </label>
+              <input
+                id="bk-kelas"
+                type="text"
+                className="input"
+                placeholder="cth: XI RPL 2"
+                value={form.kelas}
+                onChange={(e) => setForm({ ...form, kelas: e.target.value })}
+                maxLength={100}
+                required={!isGuru}
+              />
+            </div>
+
+            <div>
+              <label className="label" htmlFor="bk-jurusan">
+                Jurusan
+              </label>
+              <input
+                id="bk-jurusan"
+                type="text"
+                className="input"
+                placeholder="cth: Rekayasa Perangkat Lunak"
+                value={form.jurusan}
+                onChange={(e) => setForm({ ...form, jurusan: e.target.value })}
+                maxLength={150}
+                required={!isGuru}
+              />
+            </div>
+          </div>
+
           {/* Info Lab Terpilih */}
           {selectedLab && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -152,15 +238,17 @@ export default function NewBooking() {
               </label>
               <div className="relative">
                 <IconCalendar className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  id="bk-date"
-                  type="date"
-                  className="input !pl-10"
-                  min={new Date().toISOString().split('T')[0]}
-                  value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  required
-                />
+                  <input
+                    id="bk-date"
+                    type="text"
+                    className="input !pl-10"
+                    placeholder="DD/MM/YYYY"
+                    value={form.date_display ?? formatDateDisplay(form.date)}
+                    onChange={(e) => handleDateChange(e.target.value)}
+                    maxLength={10}
+                    inputMode="numeric"
+                    required
+                  />
               </div>
             </div>
             <div>
@@ -217,7 +305,7 @@ export default function NewBooking() {
                   Jadwal bentrok! Lab sudah dipesan pada waktu ini.
                   {availability.conflicts?.length > 0 && (
                     <span className="text-xs font-normal">
-                      ({availability.conflicts.length} booking aktif)
+                      ({availability.conflicts.length} borrowing aktif)
                     </span>
                   )}
                 </span>
@@ -289,7 +377,7 @@ export default function NewBooking() {
               className="btn-primary"
             >
               <IconPlus className="h-4 w-4" />
-              {submitting ? 'Mengirim...' : 'Ajukan Booking'}
+              {submitting ? 'Mengirim...' : 'Ajukan Borrowing'}
             </button>
           </div>
         </form>

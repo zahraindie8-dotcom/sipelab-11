@@ -25,6 +25,11 @@ class BookingController extends Controller
      */
     public function index(Request $request)
     {
+        Booking::query()
+            ->where('status', Booking::STATUS_APPROVED)
+            ->get()
+            ->each(fn (Booking $booking) => $booking->markCompletedIfFinished());
+
         $query = Booking::with(['user', 'lab', 'approver', 'report'])
             ->when(! $request->user()->canApprove(), function ($q) use ($request) {
                 $q->where('user_id', $request->user()->id);
@@ -73,7 +78,7 @@ class BookingController extends Controller
     public function store(StoreBookingRequest $request)
     {
         $validated = $request->validated();
-
+        $isGuru = $request->user()->role === 'guru';
         // Cek status lab — lab maintenance/inactive tidak boleh dibooking
         $lab = Lab::findOrFail($validated['lab_id']);
         if (! $lab->isAvailable()) {
@@ -81,16 +86,14 @@ class BookingController extends Controller
                 'message' => 'Lab tidak tersedia untuk dibooking (status: '.$lab->status_label.').',
             ], 422);
         }
-
         // Cek kapasitas — jumlah peserta tidak boleh melebihi kapasitas lab
         if (($validated['participant_count'] ?? 0) > $lab->capacity) {
             return response()->json([
                 'message' => "Jumlah peserta ({$validated['participant_count']}) melebihi kapasitas lab ({$lab->capacity}).",
             ], 422);
         }
-
         // Gunakan database lock untuk mencegah race condition double booking
-        $booking = DB::transaction(function () use ($validated, $request) {
+        $booking = DB::transaction(function () use ($validated, $request, $isGuru) {
             // Cek bentrok jadwal — hanya booking pending/approved yang mengunci
             $conflict = Booking::where('lab_id', $validated['lab_id'])
                 ->overlapping(
@@ -99,40 +102,42 @@ class BookingController extends Controller
                     $validated['end_time']
                 )
                 ->exists();
-
             if ($conflict) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'schedule' => 'Jadwal bentrok: lab sudah dipesan pada tanggal dan jam tersebut.',
                 ]);
             }
-
             return Booking::create([
                 'user_id' => $request->user()->id,
                 'lab_id' => $validated['lab_id'],
+                'kelas' => $validated['kelas'] ?? null,
+                'jurusan' => $validated['jurusan'] ?? null,
                 'date' => $validated['date'],
                 'start_time' => $validated['start_time'],
                 'end_time' => $validated['end_time'],
                 'purpose' => $validated['purpose'] ?? null,
                 'participant_count' => $validated['participant_count'] ?? 0,
                 'notes' => $validated['notes'] ?? null,
-                'status' => Booking::STATUS_PENDING,
+                'status' => $isGuru ? Booking::STATUS_APPROVED : Booking::STATUS_PENDING,
+                'approved_by' => $isGuru ? $request->user()->id : null,
+                'approved_at' => $isGuru ? now() : null,
             ]);
         });
-
-        // Kirim notifikasi ke admin & guru
-        $this->notifyApprovers(
-            $request->user(),
-            $booking,
-            Notification::TYPE_BOOKING_CREATED,
-            'Booking Lab Dibuat',
-            "Booking lab {$booking->lab->name} oleh {$request->user()->name} pada {$booking->date} ({$booking->start_time}-{$booking->end_time}) menunggu persetujuan."
-        );
-
+        // Siswa/Admin tetap menggunakan alur persetujuan seperti sebelumnya.
+        // Guru yang membuat borrowing langsung disetujui dan tidak perlu notifikasi approver.
+        if (! $isGuru) {
+            $this->notifyApprovers(
+                $request->user(),
+                $booking,
+                Notification::TYPE_BOOKING_CREATED,
+                'Booking Lab Dibuat',
+                "Booking lab {$booking->lab->name} oleh {$request->user()->name} pada {$booking->date} ({$booking->start_time}-{$booking->end_time}) menunggu persetujuan."
+            );
+        }
         return (new BookingResource(
             $booking->load(['user', 'lab', 'approver', 'report'])
         ))->response()->setStatusCode(201);
     }
-
     /**
      * Ubah booking (pemilik atau admin).
      */
@@ -385,7 +390,9 @@ class BookingController extends Controller
      */
     private function authorizeAccess(Request $request, Booking $booking): void
     {
-        if (! $request->user()->canApprove() && $request->user()->id !== $booking->user_id) {
+        $user = $request->user();
+
+        if ($user->role === 'siswa' && $user->id !== $booking->user_id) {
             abort(403, 'Anda tidak memiliki akses ke booking ini.');
         }
     }

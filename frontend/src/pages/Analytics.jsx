@@ -119,9 +119,9 @@ export default function Analytics() {
 
   // Role-aware labels
   const pageLabels = {
-    admin: { title: 'Statistik & Analitik', subtitle: 'Insight penggunaan lab sekolah berdasarkan data booking' },
-    guru: { title: 'Statistik & Analitik', subtitle: 'Insight penggunaan lab berdasarkan data booking' },
-    siswa: { title: 'Statistik Saya', subtitle: 'Ringkasan aktivitas booking pribadi Anda' },
+    admin: { title: 'Statistik & Analitik', subtitle: 'Insight penggunaan lab sekolah berdasarkan data borrowing' },
+    guru: { title: 'Statistik & Analitik', subtitle: 'Insight penggunaan lab berdasarkan data borrowing' },
+    siswa: { title: 'Statistik Saya', subtitle: 'Ringkasan aktivitas borrowing pribadi Anda' },
   }
   const labels = pageLabels[user?.role] ?? pageLabels.siswa
 
@@ -157,7 +157,7 @@ export default function Analytics() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={IconCalendar}
-          label="Total Booking"
+          label="Total Borrowing"
           value={summary.total_bookings}
           accent="brand"
           sub="Semua status"
@@ -198,14 +198,14 @@ export default function Analytics() {
               <p className="text-xs font-medium text-brand-600">Bulan Ini</p>
               <p className="mt-1 text-xs text-brand-500">{trends.this_month.label}</p>
               <p className="mt-2 text-2xl font-bold text-brand-700">{trends.this_month.total}</p>
-              <p className="text-xs text-brand-600">total booking</p>
+              <p className="text-xs text-brand-600">total borrowing</p>
             </div>
             {/* Last Month */}
             <div className="rounded-xl bg-slate-50 p-4">
               <p className="text-xs font-medium text-slate-500">Bulan Lalu</p>
               <p className="mt-1 text-xs text-slate-400">{trends.last_month.label}</p>
               <p className="mt-2 text-2xl font-bold text-slate-700">{trends.last_month.total}</p>
-              <p className="text-xs text-slate-500">total booking</p>
+              <p className="text-xs text-slate-500">total borrowing</p>
             </div>
             {/* Total Change */}
             <div className="rounded-xl bg-slate-50 p-4">
@@ -235,7 +235,7 @@ export default function Analytics() {
       <div className="card p-5">
         <div className="mb-4 flex items-center gap-2">
           <IconChart className="h-4 w-4 text-slate-400" />
-          <h2 className="text-sm font-bold text-slate-700">Booking per Bulan (12 Bulan Terakhir)</h2>
+          <h2 className="text-sm font-bold text-slate-700">Borrowing per Bulan (12 Bulan Terakhir)</h2>
         </div>
         <BarChart data={monthlyChartData} height={180} />
       </div>
@@ -245,7 +245,7 @@ export default function Analytics() {
         <div className="card p-5">
           <div className="mb-4 flex items-center gap-2">
             <IconClock className="h-4 w-4 text-slate-400" />
-            <h2 className="text-sm font-bold text-slate-700">Status Booking</h2>
+            <h2 className="text-sm font-bold text-slate-700">Status Borrowing</h2>
           </div>
           <BarChart
             data={statusChartData}
@@ -270,7 +270,7 @@ export default function Analytics() {
         <div className="card p-5">
           <div className="mb-4 flex items-center gap-2">
             <IconCalendar className="h-4 w-4 text-slate-400" />
-            <h2 className="text-sm font-bold text-slate-700">Booking Minggu Ini</h2>
+            <h2 className="text-sm font-bold text-slate-700">Borrowing Minggu Ini</h2>
           </div>
           <BarChart data={weeklyChartData} height={160} barColor="bg-sky-500" />
         </div>
@@ -281,7 +281,7 @@ export default function Analytics() {
         <div className="card p-5">
           <div className="mb-4 flex items-center gap-2">
             <IconFlask className="h-4 w-4 text-slate-400" />
-            <h2 className="text-sm font-bold text-slate-700">Penggunaan Lab (Booking Disetujui)</h2>
+            <h2 className="text-sm font-bold text-slate-700">Penggunaan Lab (Borrowing Disetujui)</h2>
           </div>
           <BarChart
             data={labChartData}

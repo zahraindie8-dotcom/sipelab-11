@@ -61,6 +61,14 @@ export default function BookingDetail({ booking }) {
           </div>
         </InfoRow>
 
+        <InfoRow label="Kelas">
+          <span className="font-medium">{booking.kelas || '—'}</span>
+        </InfoRow>
+
+        <InfoRow label="Jurusan">
+          <span className="font-medium">{booking.jurusan || '—'}</span>
+        </InfoRow>
+
         <InfoRow label="Tanggal">
           <div className="flex items-center gap-2">
             <IconCalendar className="h-4 w-4 text-slate-400" />
@@ -89,7 +97,9 @@ export default function BookingDetail({ booking }) {
                   const [sh, sm] = booking.start_time.split(':').map(Number)
                   const [eh, em] = booking.end_time.split(':').map(Number)
                   const dur = (eh * 60 + em) - (sh * 60 + sm)
-                  return dur >= 60 ? `${Math.floor(dur / 60)}j ${dur % 60 > 0 ? `${dur % 60}m` : ''}` : `${dur}m`
+                  return dur >= 60
+                    ? `${Math.floor(dur / 60)}j ${dur % 60 > 0 ? `${dur % 60}m` : ''}`
+                    : `${dur}m`
                 })()})
               </span>
             )}

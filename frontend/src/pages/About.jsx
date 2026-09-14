@@ -123,19 +123,19 @@ const faqs = [
       'SIPELAB dapat digunakan oleh guru, staf, siswa dan siswi, mahasiswa, serta pengelola atau administrator laboratorium sesuai dengan hak akses masing-masing.',
   },
   {
-    question: 'Apakah siswa dan siswi dapat melakukan booking laboratorium?',
+    question: 'Apakah siswa dan siswi dapat melakukan borrowing laboratorium?',
     answer:
-      'Ya. Siswa dan siswi yang memiliki akun dapat mengajukan booking laboratorium dengan mengisi data penggunaan seperti laboratorium, tanggal, waktu, tujuan, dan informasi pendukung lainnya.',
+      'Ya. Siswa dan siswi yang memiliki akun dapat mengajukan borrowing laboratorium dengan mengisi data penggunaan seperti laboratorium, tanggal, waktu, tujuan, dan informasi pendukung lainnya.',
   },
   {
-    question: 'Apakah booking langsung disetujui setelah diajukan?',
+    question: 'Apakah borrowing langsung disetujui setelah diajukan?',
     answer:
-      'Tidak selalu. Pengajuan booking perlu melalui proses pemeriksaan dan persetujuan dari pihak yang memiliki kewenangan sebelum penggunaan laboratorium dapat dilakukan.',
+      'Tidak selalu. Pengajuan borrowing perlu melalui proses pemeriksaan dan persetujuan dari pihak yang memiliki kewenangan sebelum penggunaan laboratorium dapat dilakukan.',
   },
   {
-    question: 'Bagaimana cara mengetahui status booking?',
+    question: 'Bagaimana cara mengetahui status borrowing?',
     answer:
-      'Status booking dapat dipantau melalui sistem. Pengguna dapat melihat apakah pengajuan masih menunggu, telah disetujui, atau ditolak.',
+      'Status borrowing dapat dipantau melalui sistem. Pengguna dapat melihat apakah pengajuan masih menunggu, telah disetujui, atau ditolak.',
   },
   {
     question: 'Apakah laporan penggunaan laboratorium diperlukan?',
@@ -160,7 +160,7 @@ const audiences = [
     icon: 'users',
     title: 'Siswa & Siswi',
     description:
-      'Memudahkan proses pengajuan penggunaan laboratorium dan pemantauan status booking.',
+      'Memudahkan proses pengajuan penggunaan laboratorium dan pemantauan status borrowing.',
   },
   {
     icon: 'lab',
@@ -172,7 +172,7 @@ const audiences = [
     icon: 'shield',
     title: 'Pengelola Laboratorium',
     description:
-      'Membantu mengatur data laboratorium, pengguna, jadwal, booking, dan proses persetujuan.',
+      'Membantu mengatur data laboratorium, pengguna, jadwal, borrowing, dan proses persetujuan.',
   },
 ]
 
@@ -186,7 +186,7 @@ const workflow = [
   },
   {
     number: '02',
-    title: 'Ajukan booking',
+    title: 'Ajukan borrowing',
     description:
       'Tentukan tanggal, waktu, tujuan, dan data penggunaan laboratorium.',
     icon: 'booking',
@@ -586,7 +586,7 @@ export default function About() {
                 <p
                   className={`mt-6 text-base font-medium leading-8 sm:text-lg ${muted}`}
                 >
-                  Dengan alur booking dan persetujuan yang jelas, setiap
+                  Dengan alur borrowing dan persetujuan yang jelas, setiap
                   penggunaan laboratorium dapat lebih mudah dipantau dan
                   didokumentasikan.
                 </p>
@@ -660,7 +660,7 @@ export default function About() {
               </div>
 
               <h2 className="text-3xl font-black tracking-[-0.035em] sm:text-5xl">
-                Dari booking sampai
+                Dari borrowing sampai
                 <br />
                 penggunaan laboratorium.
               </h2>
@@ -736,7 +736,7 @@ export default function About() {
               {[
                 {
                   title: 'Informasi terpusat',
-                  text: 'Data laboratorium, booking, jadwal, dan status penggunaan berada dalam satu sistem.',
+                  text: 'Data laboratorium, borrowing, jadwal, dan status penggunaan berada dalam satu sistem.',
                 },
                 {
                   title: 'Jadwal lebih mudah dipantau',
@@ -744,7 +744,7 @@ export default function About() {
                 },
                 {
                   title: 'Proses persetujuan terdokumentasi',
-                  text: 'Setiap pengajuan memiliki status sehingga proses booking lebih mudah ditelusuri.',
+                  text: 'Setiap pengajuan memiliki status sehingga proses borrowing lebih mudah ditelusuri.',
                 },
                 {
                   title: 'Dapat digunakan lintas perangkat',
@@ -896,7 +896,7 @@ export default function About() {
               <p
                 className={`mx-auto mt-5 max-w-xl text-sm leading-6 ${muted}`}
               >
-                Gunakan SIPELAB-11 untuk membantu mengatur booking, jadwal,
+                Gunakan SIPELAB-11 untuk membantu mengatur borrowing, jadwal,
                 persetujuan, dan penggunaan laboratorium.
               </p>
 

@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
@@ -43,22 +44,28 @@ class Handler extends ExceptionHandler
             }
         });
 
-        $this->renderable(function (Throwable $e, $request) {
-            if ($request->expectsJson()) {
-                // Production: generic message only
-                if (app()->environment('production')) {
-                    return response()->json([
-                        'message' => 'Terjadi kesalahan server. Silakan coba lagi nanti.',
-                    ], 500);
-                }
-
-                // Development: detailed error
+    $this->renderable(function (Throwable $e, $request) {
+        if ($request->expectsJson()) {
+            if ($e instanceof HttpExceptionInterface) {
                 return response()->json([
                     'message' => $e->getMessage(),
-                    'exception' => get_class($e),
-                    'line' => $e->getLine(),
+                ], $e->getStatusCode());
+            }
+
+            // Production: generic message only
+            if (app()->environment('production')) {
+                return response()->json([
+                    'message' => 'Terjadi kesalahan server. Silakan coba lagi nanti.',
                 ], 500);
             }
-        });
+
+            // Development: detailed error
+            return response()->json([
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+                'line' => $e->getLine(),
+            ], 500);
+        }
+    });
     }
 }

@@ -119,8 +119,8 @@ export default function BookingCalendar() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Kalender Booking</h1>
-          <p className="text-sm text-slate-500">Lihat jadwal booking lab dalam bentuk kalender</p>
+          <h1 className="text-xl font-bold text-slate-800">Kalender Borrowing</h1>
+          <p className="text-sm text-slate-500">Lihat jadwal borrowing lab dalam bentuk kalender</p>
         </div>
       </div>
 
@@ -230,7 +230,7 @@ export default function BookingCalendar() {
       </div>
 
       {/* Modal detail */}
-      <Modal open={!!detailTarget} onClose={() => setDetailTarget(null)} title="Detail Booking">
+      <Modal open={!!detailTarget} onClose={() => setDetailTarget(null)} title="Detail Borrowing">
         {detailTarget && <BookingDetail booking={detailTarget} />}
       </Modal>
     </div>

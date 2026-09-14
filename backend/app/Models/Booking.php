@@ -1,20 +1,16 @@
 <?php
-
 namespace App\Models;
-
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
 class Booking extends Model
 {
     use HasFactory;
-
     public const STATUS_PENDING = 'pending';
     public const STATUS_APPROVED = 'approved';
     public const STATUS_REJECTED = 'rejected';
     public const STATUS_CANCELLED = 'cancelled';
     public const STATUS_COMPLETED = 'completed';
-
     /**
      * The attributes that are mass assignable.
      *
@@ -23,6 +19,8 @@ class Booking extends Model
     protected $fillable = [
         'user_id',
         'lab_id',
+        'kelas',
+        'jurusan',
         'date',
         'start_time',
         'end_time',
@@ -34,7 +32,6 @@ class Booking extends Model
         'rejection_reason',
         'notes',
     ];
-
     /**
      * The attributes that should be cast.
      *
@@ -43,11 +40,30 @@ class Booking extends Model
     protected $casts = [
         'approved_at' => 'datetime',
     ];
-
     // Catatan: kolom 'date' sengaja TIDAK di-cast ke Carbon. Kolom DATE harus
     // diperlakukan sebagai string murni ('Y-m-d') agar query where('date', ...)
     // dan perbandingan jadwal tidak bergeser akibat konversi zona waktu.
-
+    /**
+     * Tandai booking sebagai selesai jika jadwal penggunaan sudah berakhir.
+     *
+     * Hanya booking yang sudah disetujui yang boleh berubah menjadi selesai.
+     */
+    public function markCompletedIfFinished(): bool
+    {
+        if ($this->status !== self::STATUS_APPROVED) {
+            return false;
+        }
+        $endDateTime = Carbon::parse(
+            $this->date . ' ' . $this->end_time
+        );
+        if (now()->greaterThanOrEqualTo($endDateTime)) {
+            $this->update([
+                'status' => self::STATUS_COMPLETED,
+            ]);
+            return true;
+        }
+        return false;
+    }
     /**
      * Relasi ke user pemesan.
      */
@@ -55,7 +71,6 @@ class Booking extends Model
     {
         return $this->belongsTo(User::class);
     }
-
     /**
      * Relasi ke lab yang dipesan.
      */
@@ -63,7 +78,6 @@ class Booking extends Model
     {
         return $this->belongsTo(Lab::class);
     }
-
     /**
      * Relasi ke laporan penggunaan lab.
      */
@@ -71,7 +85,6 @@ class Booking extends Model
     {
         return $this->hasOne(Report::class);
     }
-
     /**
      * Relasi ke user yang menyetujui booking.
      */
@@ -79,7 +92,6 @@ class Booking extends Model
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
-
     /**
      * Relasi ke notifikasi terkait booking ini.
      */
@@ -87,16 +99,14 @@ class Booking extends Model
     {
         return $this->hasMany(Notification::class);
     }
-
     /**
-     * Scope: booking yang statusnya aktif (pending, approved) â€” menghitung konflik.
+     * Scope: booking yang statusnya aktif (pending, approved) — menghitung konflik.
      * Booking cancelled/rejected tidak dianggap sebagai konflik aktif.
      */
     public function scopeActive($query)
     {
         return $query->whereIn('status', [self::STATUS_PENDING, self::STATUS_APPROVED]);
     }
-
     /**
      * Scope: booking yang statusnya disetujui.
      */
@@ -104,7 +114,6 @@ class Booking extends Model
     {
         return $query->where('status', self::STATUS_APPROVED);
     }
-
     /**
      * Scope: booking yang rentang waktunya tumpang tindih dengan tanggal & jam tertentu.
      *
@@ -118,9 +127,8 @@ class Booking extends Model
      */
     public function scopeOverlapping($query, $date, $startTime, $endTime, $exceptId = null)
     {
-        $start = strlen($startTime) === 5 ? $startTime.':00' : $startTime;
-        $end = strlen($endTime) === 5 ? $endTime.':00' : $endTime;
-
+        $start = strlen($startTime) === 5 ? $startTime . ':00' : $startTime;
+        $end = strlen($endTime) === 5 ? $endTime . ':00' : $endTime;
         return $query->where('date', $date)
             ->whereIn('status', [self::STATUS_PENDING, self::STATUS_APPROVED])
             ->where(function ($q) use ($start, $end) {
@@ -129,7 +137,6 @@ class Booking extends Model
             })
             ->when($exceptId, fn ($q) => $q->where('id', '!=', $exceptId));
     }
-
     /**
      * Cek apakah booking ini masih bisa dibatalkan.
      * Booking hanya bisa dibatalkan jika statusnya pending.
@@ -138,7 +145,6 @@ class Booking extends Model
     {
         return $this->status === self::STATUS_PENDING;
     }
-
     /**
      * Cek apakah booking ini masih bisa diedit.
      */
@@ -146,7 +152,6 @@ class Booking extends Model
     {
         return $this->status === self::STATUS_PENDING;
     }
-
     /**
      * Label status dalam Bahasa Indonesia.
      */

@@ -47,7 +47,7 @@ export default function AdminDashboard({ data = {} }) {
         />
         <StatCard
           icon={IconCalendar}
-          label="Total Booking"
+          label="Total Borrowing"
           value={stats.total_bookings}
           accent="sky"
           sub="Semua status"
@@ -77,14 +77,14 @@ export default function AdminDashboard({ data = {} }) {
           label="Ditolak"
           value={stats.rejected}
           accent="rose"
-          sub="Booking tertolak"
+          sub="Borrowing tertolak"
         />
         <StatCard
           icon={IconCalendar}
           label="Dibatalkan"
           value={stats.cancelled}
           accent="sky"
-          sub="Booking dibatalkan"
+          sub="Borrowing dibatalkan"
         />
         <StatCard
           icon={IconInbox}

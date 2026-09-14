@@ -164,14 +164,14 @@ const features = [
     icon: 'calendar',
     title: 'Jadwal lebih transparan',
     description:
-      'Lihat ketersediaan ruang sebelum melakukan booking sehingga jadwal penggunaan lebih mudah diatur.',
+      'Lihat ketersediaan ruang sebelum melakukan borrowing sehingga jadwal penggunaan lebih mudah diatur.',
   },
   {
     number: '03',
     icon: 'check',
     title: 'Approval lebih jelas',
     description:
-      'Setiap pengajuan memiliki status yang jelas sehingga pengguna mengetahui perkembangan booking mereka.',
+      'Setiap pengajuan memiliki status yang jelas sehingga pengguna mengetahui perkembangan borrowing mereka.',
   },
   {
     number: '04',
@@ -198,7 +198,7 @@ const steps = [
   {
     number: '03',
     icon: 'booking',
-    title: 'Kirim booking',
+    title: 'Kirim borrowing',
     description: 'Ajukan permintaan penggunaan melalui sistem.',
   },
   {
@@ -556,7 +556,7 @@ export default function LandingPage() {
                   >
                     <div>
                       <div className="text-sm font-bold">
-                        Pengajuan Booking
+                        Pengajuan Borrowing
                       </div>
                       <div className={`mt-0.5 text-xs ${muted}`}>
                         Buat jadwal penggunaan laboratorium
@@ -669,7 +669,7 @@ export default function LandingPage() {
                       type="button"
                       className="w-full rounded-xl bg-white px-4 py-3.5 text-sm font-bold text-black"
                     >
-                      Ajukan Booking
+                      Ajukan Borrowing
                     </button>
                   </div>
                 </div>
@@ -1280,7 +1280,7 @@ export default function LandingPage() {
                   </div>
 
                   <p className={`text-sm font-medium leading-5 ${muted}`}>
-                    Pengajuan dan pemantauan booking dalam satu sistem.
+                    Pengajuan dan pemantauan borrowing dalam satu sistem.
                   </p>
                 </div>
               </div>

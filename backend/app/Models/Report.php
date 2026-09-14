@@ -1,14 +1,10 @@
 <?php
-
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
 class Report extends Model
 {
     use HasFactory;
-
     /**
      * The attributes that are mass assignable.
      *
@@ -20,7 +16,6 @@ class Report extends Model
         'photo',
         'description',
     ];
-
     /**
      * Relasi ke booking terkait.
      */
@@ -28,7 +23,6 @@ class Report extends Model
     {
         return $this->belongsTo(Booking::class);
     }
-
     /**
      * Relasi ke user yang membuat laporan.
      */
@@ -36,7 +30,13 @@ class Report extends Model
     {
         return $this->belongsTo(User::class);
     }
-
+    /**
+     * Relasi ke file-file laporan Before/After.
+     */
+    public function files()
+    {
+        return $this->hasMany(ReportFile::class);
+    }
     /**
      * URL lengkap foto bukti.
      */

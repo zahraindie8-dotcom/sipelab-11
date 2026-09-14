@@ -110,6 +110,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     
     // Report Photo - serve from private storage securely
     Route::get('/reports/{report}/photo', [ReportController::class, 'showPhoto'])->name('api.reports.photo');
+    Route::get('/reports/{report}/files/{file}', [ReportController::class, 'showFile'])->name('api.reports.file');
 
     // Analytics — admin, guru, siswa (data di-scoping sesuai role)
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('api.analytics');

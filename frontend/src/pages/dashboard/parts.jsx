@@ -104,8 +104,8 @@ export function ActivityList({ bookings = [], seeAllTo, emptyAction }) {
       {!bookings || bookings.length === 0 ? (
         <EmptyState
           icon={IconCalendar}
-          title="Belum ada booking"
-          description="Mulai buat booking lab untuk melihat aktivitas di sini."
+          title="Belum ada borrowing"
+          description="Mulai buat borrowing lab untuk melihat aktivitas di sini."
           action={emptyAction}
         />
       ) : (
@@ -164,7 +164,7 @@ export function PendingQueue({ bookings = [], processing, onApprove, onReject, s
         <EmptyState
           icon={IconInbox}
           title="Tidak ada antrian"
-          description="Semua booking yang menunggu sudah diproses. Mantap!"
+          description="Semua borrowing yang menunggu sudah diproses. Mantap!"
         />
       ) : (
         <ul className="divide-y divide-slate-100">
@@ -216,7 +216,7 @@ export function BookNowButton({ className = 'btn-primary' } = {}) {
   return (
     <Link to="/booking/new" className={className}>
       <IconPlus className="h-4 w-4" />
-      Booking Lab
+      Borrowing Lab
     </Link>
   )
 }

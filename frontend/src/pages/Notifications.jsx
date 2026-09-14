@@ -73,7 +73,7 @@ export default function Notifications() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-800">Notifikasi</h1>
-          <p className="text-sm text-slate-500">Pemberitahuan terkait booking lab Anda</p>
+          <p className="text-sm text-slate-500">Pemberitahuan terkait borrowing lab Anda</p>
         </div>
         {unreadCount > 0 && (
           <button onClick={markAllAsRead} className="btn-secondary">
@@ -93,7 +93,7 @@ export default function Notifications() {
           <EmptyState
             icon={IconInbox}
             title="Tidak ada notifikasi"
-            description="Notifikasi terkait booking akan muncul di sini."
+            description="Notifikasi terkait borrowing akan muncul di sini."
           />
         ) : (
           <>

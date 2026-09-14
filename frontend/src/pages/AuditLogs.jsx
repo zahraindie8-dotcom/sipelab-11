@@ -169,7 +169,7 @@ export default function AuditLogs() {
                 <option value="">Semua Entity</option>
                 <option value="App\Models\User">User</option>
                 <option value="App\Models\Lab">Lab</option>
-                <option value="App\Models\Booking">Booking</option>
+                <option value="App\Models\Booking">Borrowing</option>
                 <option value="App\Models\Report">Report</option>
               </select>
             </div>

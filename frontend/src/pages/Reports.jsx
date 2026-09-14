@@ -55,9 +55,10 @@ export default function Reports() {
 
   // Upload modal
   const [uploadOpen, setUploadOpen] = useState(false)
-  const [approvedBookings, setApprovedBookings] = useState([])
+  const [completedBookings, setCompletedBookings] = useState([])
   const [form, setForm] = useState({ booking_id: '', description: '' })
-  const [photo, setPhoto] = useState(null)
+  const [beforeFiles, setBeforeFiles] = useState([])
+  const [afterFiles, setAfterFiles] = useState([])
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState(null)
 
@@ -65,8 +66,9 @@ export default function Reports() {
   const [printReports, setPrintReports] = useState(null)
   const [printing, setPrinting] = useState(false)
 
-  //Private report photos
+  //Private report photos/files
   const [photoUrls, setPhotoUrls] = useState({})
+  const [fileUrls, setFileUrls] = useState({})
 
   const fetchReports = useCallback(async () => {
     setLoading(true)
@@ -108,43 +110,86 @@ export default function Reports() {
   const openUpload = async () => {
     setFormError(null)
     setForm({ booking_id: '', description: '' })
-    setPhoto(null)
+    setBeforeFiles([])
+    setAfterFiles([])
     setUploadOpen(true)
+
     try {
       const { data } = await client.get('/bookings', {
-        params: { status: 'approved', per_page: 50 },
+        params: { status: 'completed', per_page: 50 },
       })
-      // Hanya booking yang belum punya laporan.
-      setApprovedBookings(data.data.filter((b) => !b.has_report))
+
+      // Hanya borrowing yang sudah selesai dan belum memiliki laporan.
+      setCompletedBookings(data.data.filter((b) => !b.has_report))
     } catch (err) {
       toast(extractError(err), 'error')
     }
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!photo) {
-      setFormError('Foto bukti penggunaan wajib diunggah.')
-      return
-    }
-    setSaving(true)
-    setFormError(null)
-    try {
-      const fd = new FormData()
-      fd.append('booking_id', form.booking_id)
-      fd.append('description', form.description)
-      fd.append('photo', photo)
-      await client.post('/reports', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-      toast('Laporan penggunaan lab berhasil diunggah.')
-      setUploadOpen(false)
-      fetchReports()
-      fetchAnalytics()
-    } catch (err) {
-      setFormError(extractError(err))
-    } finally {
-      setSaving(false)
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault()
+
+  if (!form.booking_id) {
+    setFormError('Borrowing wajib dipilih.')
+    return
   }
+
+  if (beforeFiles.length === 0) {
+    setFormError('Minimal 1 file Before wajib diunggah.')
+    return
+  }
+
+  if (afterFiles.length === 0) {
+    setFormError('Minimal 1 file After wajib diunggah.')
+    return
+  }
+
+  if (beforeFiles.length > 25) {
+    setFormError('Maksimal 25 file Before dapat diunggah.')
+    return
+  }
+
+  if (afterFiles.length > 25) {
+    setFormError('Maksimal 25 file After dapat diunggah.')
+    return
+  }
+
+  if (!form.description.trim()) {
+    setFormError('Deskripsi aktivitas wajib diisi.')
+    return
+  }
+
+  setSaving(true)
+  setFormError(null)
+
+  try {
+    const fd = new FormData()
+
+    fd.append('booking_id', form.booking_id)
+    fd.append('description', form.description)
+
+    beforeFiles.forEach((file) => {
+      fd.append('before[]', file)
+    })
+
+    afterFiles.forEach((file) => {
+      fd.append('after[]', file)
+    })
+
+    await client.post('/reports', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+
+    toast('Laporan penggunaan lab berhasil diunggah.')
+    setUploadOpen(false)
+    fetchReports()
+    fetchAnalytics()
+  } catch (err) {
+    setFormError(extractError(err))
+  } finally {
+    setSaving(false)
+  }
+}
 
 const loadReportPhoto = useCallback(async (report) => {
       if (!report?.id) return null
@@ -172,6 +217,50 @@ const loadReportPhoto = useCallback(async (report) => {
         return null
       }
 }, [photoUrls, toast])
+
+  useEffect(() => {
+    return () => {
+      Object.values(photoUrls).forEach((url) => {
+        URL.revokeObjectURL(url)
+      })
+
+      Object.values(fileUrls).forEach((url) => {
+        URL.revokeObjectURL(url)
+      })
+    }
+  }, [photoUrls, fileUrls])
+
+
+  const loadReportFile = useCallback(async (report, file) => {
+    if (!report?.id || !file?.id) return null
+
+    const cacheKey = `${report.id}-${file.id}`
+
+    if (fileUrls[cacheKey]) {
+      return fileUrls[cacheKey]
+    }
+
+    try {
+      const response = await client.get(
+        `/reports/${report.id}/files/${file.id}`,
+        {
+          responseType: 'blob',
+        }
+      )
+
+      const url = URL.createObjectURL(response.data)
+
+      setFileUrls((prev) => ({
+        ...prev,
+        [cacheKey]: url,
+      }))
+
+      return url
+    } catch (err) {
+      toast(extractError(err), 'error')
+      return null
+    }
+  }, [fileUrls, toast])
 
   const removeReport = async (r) => {
     if (!window.confirm('Hapus laporan ini?')) return
@@ -234,27 +323,32 @@ const loadReportPhoto = useCallback(async (report) => {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <DateRangeFilter
-            filters={filters}
-            onChange={setFilters}
-            open={showFilters}
-            onToggle={() => setShowFilters(!showFilters)}
-          />
-          <a
-            href={`/api/export/reports${filters.date_from ? `?date_from=${filters.date_from}` : ''}${filters.date_to ? `${filters.date_from ? '&' : '?'}date_to=${filters.date_to}` : ''}`}
-            target="_blank"
-            rel="noreferrer"
-            className="btn-secondary"
-          >
-            <IconDownload className="h-4 w-4" />
-            <span className="hidden sm:inline">Export CSV</span>
-            <span className="sm:hidden">Export</span>
-          </a>
-          <button onClick={handlePrint} disabled={printing} className="btn-secondary">
-            <IconPrinter className="h-4 w-4" />
-            <span className="hidden sm:inline">{printing ? 'Memuat...' : 'Cetak Laporan'}</span>
-            <span className="sm:hidden">Cetak</span>
-          </button>
+          {user.role !== 'siswa' && (
+            <>
+              <DateRangeFilter
+                filters={filters}
+                onChange={setFilters}
+                open={showFilters}
+                onToggle={() => setShowFilters(!showFilters)}
+              />
+              <a
+                href={`/api/export/reports${filters.date_from ? `?date_from=${filters.date_from}` : ''}${filters.date_to ? `${filters.date_from ? '&' : '?'}date_to=${filters.date_to}` : ''}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary"
+              >
+                <IconDownload className="h-4 w-4" />
+                <span className="hidden sm:inline">Export CSV</span>
+                <span className="sm:hidden">Export</span>
+              </a>
+              <button onClick={handlePrint} disabled={printing} className="btn-secondary">
+                <IconPrinter className="h-4 w-4" />
+                <span className="hidden sm:inline">{printing ? 'Memuat...' : 'Cetak Laporan'}</span>
+                <span className="sm:hidden">Cetak</span>
+              </button>
+            </>
+          )}
+
           <button onClick={openUpload} className="btn-primary">
             <IconPlus className="h-4 w-4" />
             <span className="hidden sm:inline">Upload Laporan</span>
@@ -282,7 +376,7 @@ const loadReportPhoto = useCallback(async (report) => {
             />
             <StatCard
               icon={IconFlask}
-              label="Booking Disetujui"
+              label="Borrowing Disetujui"
               value={analytics.summary.total_approved}
               accent="emerald"
               sub="Siap dilaporkan"
@@ -396,7 +490,7 @@ const loadReportPhoto = useCallback(async (report) => {
           <EmptyState
             icon={IconCamera}
             title="Belum ada laporan"
-            description="Unggah foto bukti penggunaan lab untuk booking yang sudah disetujui."
+            description="Unggah foto bukti penggunaan lab untuk borrowing yang sudah disetujui."
             action={
               <button onClick={openUpload} className="btn-primary">
                 <IconPlus className="h-4 w-4" />
@@ -409,39 +503,98 @@ const loadReportPhoto = useCallback(async (report) => {
             <ul className="divide-y divide-slate-100">
               {reports.map((r) => (
                 <li key={r.id} className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4">
-                  {r.photo_url ? (
+                  {r.files?.length > 0 ? (
+                    <div className="w-full shrink-0 sm:w-52">
+                      <div className="grid grid-cols-2 gap-2">
+                        {r.files.map((file) => {
+                          const cacheKey = `${r.id}-${file.id}`
+                          const fileUrl = fileUrls[cacheKey]
+                          const extension = file.file?.split('.').pop()?.toLowerCase() ?? ''
+                          const isVideo = ['mp4', 'mov', 'webm'].includes(extension)
+
+                          return (
+                            <div
+                              key={file.id}
+                              className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+                            >
+                              <div className="border-b border-slate-200 px-2 py-1">
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                                  {file.type === 'before' ? 'Before' : 'After'}
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const url = await loadReportFile(r, file)
+
+                                  if (url) {
+                                    window.open(url, '_blank', 'noopener,noreferrer')
+                                  }
+                                }}
+                                className="block w-full"
+                                title={`Lihat ${file.type === 'before' ? 'Before' : 'After'}`}
+                              >
+                                {fileUrl ? (
+                                  isVideo ? (
+                                    <video
+                                      src={fileUrl}
+                                      className="h-24 w-full object-cover"
+                                      muted
+                                      preload="metadata"
+                                    />
+                                  ) : (
+                                    <img
+                                      src={fileUrl}
+                                      alt={`${file.type === 'before' ? 'Before' : 'After'} laporan`}
+                                      className="h-24 w-full object-cover"
+                                    />
+                                  )
+                                ) : (
+                                  <div className="flex h-24 items-center justify-center bg-slate-100 text-xs text-slate-400">
+                                    Memuat...
+                                  </div>
+                                )}
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ) : r.photo_url ? (
                     <button
-                        type="button"
-                        onClick={async () => {
-                          const url = await loadReportPhoto(r)
-                          if (url) {
-                            window.open(url, '_blank', 'noopener,noreferrer')
-                          }
-                        }}
-                        className="block shrink-0 overflow-hidden rounded-xl ring-1 ring-slate-200 transition hover:ring-brand-400"
-                        title="Lihat foto asli"
-                      >
-                        {photoUrls[r.id] ? (
-                          <img
-                            src={photoUrls[r.id]}
-                            alt="Bukti penggunaan lab"
-                            className="h-20 w-28 object-cover sm:h-24 sm:w-36"
-                          />
-                        ) : (
-                          <div className="flex h-20 w-28 items-center justify-center bg-slate-100 text-xs text-slate-400 sm:h-24 sm:w-36">
-                            Memuat...
-                          </div>
-                        )}
-                      </button>
+                      type="button"
+                      onClick={async () => {
+                        const url = await loadReportPhoto(r)
+
+                        if (url) {
+                          window.open(url, '_blank', 'noopener,noreferrer')
+                        }
+                      }}
+                      className="block shrink-0 overflow-hidden rounded-xl ring-1 ring-slate-200 transition hover:ring-brand-400"
+                      title="Lihat foto asli"
+                    >
+                      {photoUrls[r.id] ? (
+                        <img
+                          src={photoUrls[r.id]}
+                          alt="Bukti penggunaan lab"
+                          className="h-20 w-28 object-cover sm:h-24 sm:w-36"
+                        />
+                      ) : (
+                        <div className="flex h-20 w-28 items-center justify-center bg-slate-100 text-xs text-slate-400 sm:h-24 sm:w-36">
+                          Memuat...
+                        </div>
+                      )}
+                    </button>
                   ) : (
-                    <div className="flex h-20 w-28 items-center justify-center rounded-xl bg-slate-100 text-slate-400 sm:h-24 sm:w-36">
+                    <div className="flex h-20 w-28 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400 sm:h-24 sm:w-36">
                       <IconCamera className="h-6 w-6 sm:h-8 sm:w-8" />
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold text-slate-700">
-                        {r.booking?.lab_name ?? `Booking #${r.booking_id}`}
+                        {r.booking?.lab_name ?? `Borrowing #${r.booking_id}`}
                       </span>
                       <StatusBadge status={r.booking?.status ?? 'approved'} />
                     </div>
@@ -449,6 +602,17 @@ const loadReportPhoto = useCallback(async (report) => {
                       {r.booking?.date} · {r.booking?.start_time}–{r.booking?.end_time} · oleh{' '}
                       {r.user?.name}
                     </p>
+
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                        Kelas: {r.booking?.kelas ?? '—'}
+                      </span>
+
+                      <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                        Jurusan: {r.booking?.jurusan ?? '—'}
+                      </span>
+                    </div>
+
                     {r.description && (
                       <p className="mt-2 text-sm text-slate-600">{r.description}</p>
                     )}
@@ -491,11 +655,13 @@ const loadReportPhoto = useCallback(async (report) => {
             {formError}
           </div>
         )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="label" htmlFor="rep-booking">
-              Booking (disetujui)
+              Borrowing (selesai)
             </label>
+
             <select
               id="rep-booking"
               className="input"
@@ -503,60 +669,203 @@ const loadReportPhoto = useCallback(async (report) => {
               onChange={(e) => setForm({ ...form, booking_id: e.target.value })}
               required
             >
-              <option value="">— Pilih booking —</option>
-              {approvedBookings.map((b) => (
+              <option value="">— Pilih borrowing —</option>
+
+              {completedBookings.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.lab_name} · {b.date} ({b.start_time})
+                  {b.lab_name} · {b.date} ({b.start_time}–{b.end_time})
                 </option>
               ))}
             </select>
-            {approvedBookings.length === 0 && (
+
+            {completedBookings.length === 0 && (
               <p className="mt-2 text-xs text-slate-400">
-                Tidak ada booking disetujui yang belum dilaporkan.
+                Tidak ada borrowing yang sudah selesai dan belum dilaporkan.
               </p>
             )}
           </div>
 
+          {form.booking_id && (() => {
+            const selectedBooking = completedBookings.find(
+              (b) => String(b.id) === String(form.booking_id)
+            )
+
+            if (!selectedBooking) return null
+
+            return (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                  <div>
+                    <span className="text-xs text-slate-400">Nama</span>
+                    <p className="font-medium text-slate-700">
+                      {selectedBooking.user?.name ?? '—'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-slate-400">Kelas</span>
+                    <p className="font-medium text-slate-700">
+                      {selectedBooking.kelas ?? '—'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-slate-400">Jurusan</span>
+                    <p className="font-medium text-slate-700">
+                      {selectedBooking.jurusan ?? '—'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-slate-400">Lab</span>
+                    <p className="font-medium text-slate-700">
+                      {selectedBooking.lab_name ?? '—'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-slate-400">Tanggal</span>
+                    <p className="font-medium text-slate-700">
+                      {selectedBooking.date ?? '—'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-slate-400">Jam</span>
+                    <p className="font-medium text-slate-700">
+                      {selectedBooking.start_time ?? '—'} – {selectedBooking.end_time ?? '—'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
+
           <div>
-            <label className="label" htmlFor="rep-photo">
-              Foto Bukti
+            <label className="label" htmlFor="rep-before">
+              Before
             </label>
+
             <label
-              className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-8 text-center transition ${
-                photo
+              className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-6 text-center transition ${
+                beforeFiles.length > 0
                   ? 'border-emerald-300 bg-emerald-50'
                   : 'border-slate-300 bg-slate-50 hover:border-brand-400 hover:bg-brand-50/50'
               }`}
             >
               <IconCamera className="mb-2 h-8 w-8 text-slate-400" />
-              {photo ? (
+
+              {beforeFiles.length > 0 ? (
                 <span className="text-sm font-semibold text-emerald-600">
-                  ✓ {photo.name}
+                  ✓ {beforeFiles.length} file dipilih
                 </span>
               ) : (
                 <>
                   <span className="text-sm font-semibold text-slate-600">
-                    Klik untuk pilih foto
+                    Klik untuk pilih foto/video Before
                   </span>
                   <span className="mt-1 text-xs text-slate-400">
-                    JPG/PNG, maksimal 5 MB
+                    Maksimal 25 file · JPG/JPEG/PNG/MP4/MOV/WEBM · maksimal 5 MB per file
                   </span>
                 </>
               )}
+
               <input
-                id="rep-photo"
+                id="rep-before"
                 type="file"
-                accept="image/jpeg,image/png"
+                accept="image/jpeg,image/png,video/mp4,video/quicktime,video/webm"
+                multiple
                 className="hidden"
-                onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  const files = Array.from(e.target.files ?? [])
+
+                  if (files.length > 25) {
+                    setFormError('Maksimal 25 file Before dapat diunggah.')
+                    return
+                  }
+
+                  setFormError(null)
+                  setBeforeFiles(files)
+                }}
               />
             </label>
+
+            {beforeFiles.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {beforeFiles.map((file, index) => (
+                  <p key={`${file.name}-${index}`} className="text-xs text-slate-500">
+                    {index + 1}. {file.name}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="label" htmlFor="rep-after">
+              After
+            </label>
+
+            <label
+              className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-6 text-center transition ${
+                afterFiles.length > 0
+                  ? 'border-emerald-300 bg-emerald-50'
+                  : 'border-slate-300 bg-slate-50 hover:border-brand-400 hover:bg-brand-50/50'
+              }`}
+            >
+              <IconCamera className="mb-2 h-8 w-8 text-slate-400" />
+
+              {afterFiles.length > 0 ? (
+                <span className="text-sm font-semibold text-emerald-600">
+                  ✓ {afterFiles.length} file dipilih
+                </span>
+              ) : (
+                <>
+                  <span className="text-sm font-semibold text-slate-600">
+                    Klik untuk pilih foto/video After
+                  </span>
+                  <span className="mt-1 text-xs text-slate-400">
+                    Maksimal 25 file · JPG/JPEG/PNG/MP4/MOV/WEBM · maksimal 5 MB per file
+                  </span>
+                </>
+              )}
+
+              <input
+                id="rep-after"
+                type="file"
+                accept="image/jpeg,image/png,video/mp4,video/quicktime,video/webm"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files ?? [])
+
+                  if (files.length > 25) {
+                    setFormError('Maksimal 25 file After dapat diunggah.')
+                    return
+                  }
+
+                  setFormError(null)
+                  setAfterFiles(files)
+                }}
+              />
+            </label>
+
+            {afterFiles.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {afterFiles.map((file, index) => (
+                  <p key={`${file.name}-${index}`} className="text-xs text-slate-500">
+                    {index + 1}. {file.name}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
             <label className="label" htmlFor="rep-desc">
               Deskripsi Aktivitas
             </label>
+
             <textarea
               id="rep-desc"
               rows="3"
@@ -564,6 +873,7 @@ const loadReportPhoto = useCallback(async (report) => {
               placeholder="cth: Praktikum jaringan komputer, materi routing dasar..."
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
+              required
             />
           </div>
 
@@ -571,6 +881,7 @@ const loadReportPhoto = useCallback(async (report) => {
             <button type="button" onClick={() => setUploadOpen(false)} className="btn-secondary">
               Batal
             </button>
+
             <button type="submit" disabled={saving} className="btn-primary">
               {saving ? 'Mengunggah...' : 'Simpan Laporan'}
             </button>

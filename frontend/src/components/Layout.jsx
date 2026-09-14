@@ -69,10 +69,10 @@ export default function Layout() {
 
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: IconHome, end: true },
-    { to: '/booking/new', label: 'Booking Lab', icon: IconPlus },
+    { to: '/booking/new', label: 'Borrowing Lab', icon: IconPlus },
     {
       to: '/bookings',
-      label: user.can_approve ? 'Semua Booking' : 'Booking Saya',
+      label: user.can_approve ? 'Semua Borrowing' : 'Borrowing Saya',
       icon: IconCalendar,
     },
     { to: '/calendar', label: 'Kalender', icon: IconCalendar },
@@ -81,7 +81,6 @@ export default function Layout() {
       : []),
     { to: '/labs', label: user.role === 'admin' ? 'Kelola Lab' : 'Daftar Lab', icon: IconFlask },
     { to: '/reports', label: 'Laporan', icon: IconCamera },
-    { to: '/notifications', label: 'Notifikasi', icon: IconInbox },
     ...(user.role === 'admin'
       ? [
           { to: '/analytics', label: 'Statistik', icon: IconTrending },
@@ -216,6 +215,14 @@ export default function Layout() {
               >
                 {roleLabel[user.role] ?? user.role}
               </span>
+                <button
+                  onClick={() => navigate('/notifications')}
+                  className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="Notifikasi"
+                  title="Notifikasi"
+                >
+                  <IconInbox className="h-5 w-5" />
+                </button>
             </div>
           </div>
         </header>

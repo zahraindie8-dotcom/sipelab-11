@@ -17,7 +17,7 @@ class RegisterRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
 
             'username' => [
-                'required',
+                'nullable',
                 'string',
                 'min:3',
                 'max:50',
@@ -40,9 +40,8 @@ class RegisterRequest extends FormRequest
                 'confirmed',
             ],
 
-            // Admin sengaja TIDAK dimasukkan.
             'role' => [
-                'required',
+                'nullable',
                 'in:guru,siswa',
             ],
         ];
@@ -53,7 +52,6 @@ class RegisterRequest extends FormRequest
         return [
             'name.required' => 'Nama wajib diisi.',
 
-            'username.required' => 'Username wajib diisi.',
             'username.min' => 'Username minimal 3 karakter.',
             'username.max' => 'Username maksimal 50 karakter.',
             'username.alpha_dash' => 'Username hanya boleh berisi huruf, angka, tanda hubung (-), dan garis bawah (_).',
@@ -67,7 +65,6 @@ class RegisterRequest extends FormRequest
             'password.min' => 'Password minimal 8 karakter.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
 
-            'role.required' => 'Role wajib dipilih.',
             'role.in' => 'Role yang diperbolehkan hanya Guru atau Siswa.',
         ];
     }

@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Resources;
-
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,6 +19,8 @@ class BookingResource extends JsonResource
             'user_name' => $this->user?->name,
             'lab' => new LabResource($this->whenLoaded('lab')),
             'lab_name' => $this->lab?->name,
+            'kelas' => $this->kelas,
+            'jurusan' => $this->jurusan,
             'date' => substr((string) $this->date, 0, 10),
             'start_time' => $this->start_time ? substr($this->start_time, 0, 5) : $this->start_time,
             'end_time' => $this->end_time ? substr($this->end_time, 0, 5) : $this->end_time,

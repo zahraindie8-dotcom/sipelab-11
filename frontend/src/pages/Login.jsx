@@ -622,7 +622,7 @@ export default function Login() {
 
               <div className="mt-4 space-y-3 text-sm text-slate-500">
                 <p>Manajemen Laboratorium</p>
-                <p>Penjadwalan & Booking</p>
+                <p>Penjadwalan & Borrowing</p>
                 <p>Persetujuan Penggunaan</p>
                 <p>Monitoring Aktivitas</p>
               </div>

@@ -61,7 +61,7 @@ export default function Approvals() {
     setProcessing(true)
     try {
       await client.post(`/bookings/${b.id}/approve`)
-      toast(`Booking ${b.lab_name} disetujui.`)
+      toast(`Borrowing ${b.lab_name} disetujui.`)
       fetchPending()
     } catch (err) {
       toast(extractError(err), 'error')
@@ -75,7 +75,7 @@ export default function Approvals() {
     setProcessing(true)
     try {
       await client.post(`/bookings/${rejectTarget.id}/reject`, { reason })
-      toast(`Booking ${rejectTarget.lab_name} ditolak.`)
+      toast(`Borrowing ${rejectTarget.lab_name} ditolak.`)
       setRejectTarget(null)
       setReason('')
       fetchPending()
@@ -91,9 +91,9 @@ export default function Approvals() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-slate-800">Persetujuan Booking</h1>
+        <h1 className="text-xl font-bold text-slate-800">Persetujuan Borrowing</h1>
         <p className="text-sm text-slate-500">
-          Antrian booking yang menunggu persetujuan Anda
+          Antrian borrowing yang menunggu persetujuan Anda
         </p>
       </div>
 
@@ -129,7 +129,7 @@ export default function Approvals() {
         ) : bookings.length === 0 ? (
           <EmptyState
             icon={IconInbox}
-            title="Tidak ada booking menunggu"
+            title="Tidak ada borrowing menunggu"
             description="Semua antrian persetujuan sudah beres. Mantap!"
           />
         ) : (
@@ -193,15 +193,15 @@ export default function Approvals() {
       </div>
 
       {/* Modal detail booking */}
-      <Modal open={!!detailTarget} onClose={() => setDetailTarget(null)} title="Detail Booking">
+      <Modal open={!!detailTarget} onClose={() => setDetailTarget(null)} title="Detail Borrowing">
         {detailTarget && <BookingDetail booking={detailTarget} />}
       </Modal>
 
-      <Modal open={!!rejectTarget} onClose={() => setRejectTarget(null)} title="Tolak Booking">
+      <Modal open={!!rejectTarget} onClose={() => setRejectTarget(null)} title="Tolak Borrowing">
         {rejectTarget && (
           <form onSubmit={submitReject} className="space-y-4">
             <p className="text-sm text-slate-500">
-              Anda akan menolak booking{' '}
+              Anda akan menolak borrowing{' '}
               <span className="font-semibold text-slate-700">{rejectTarget.lab_name}</span> oleh{' '}
               <span className="font-semibold text-slate-700">{rejectTarget.user_name}</span> pada{' '}
               {rejectTarget.date} ({rejectTarget.start_time}–{rejectTarget.end_time}).
@@ -214,7 +214,7 @@ export default function Approvals() {
                 id="ap-reason"
                 rows="3"
                 className="input"
-                placeholder="Alasan ditolak akan dicatat pada riwayat booking..."
+                placeholder="Alasan ditolak akan dicatat pada riwayat borrowing..."
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
               />
@@ -224,7 +224,7 @@ export default function Approvals() {
                 Batal
               </button>
               <button type="submit" disabled={processing || !reason.trim()} className="btn-danger">
-                {processing ? 'Memproses...' : 'Tolak Booking'}
+                {processing ? 'Memproses...' : 'Tolak Borrowing'}
               </button>
             </div>
           </form>

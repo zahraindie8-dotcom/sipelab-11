@@ -9,11 +9,18 @@ class Lab extends Model
 {
     use HasFactory;
 
+public const STATUS_ACTIVE = 'active';
+public const STATUS_MAINTENANCE = 'maintenance';
+public const STATUS_INACTIVE = 'inactive';
+
     protected $fillable = [
         'name',
+        'code',
         'capacity',
         'description',
         'location',
+        'status',
+
 
     ];
 
@@ -31,15 +38,7 @@ class Lab extends Model
      */
     public function isAvailable(): bool
     {
-        return true;
-    }
-
-    /**
-     * Status lab saat ini.
-     */
-    public function getStatusAttribute(): string
-    {
-        return 'active';
+        return $this->status === self::STATUS_ACTIVE;
     }
 
     /**
@@ -47,6 +46,10 @@ class Lab extends Model
      */
     public function getStatusLabelAttribute(): string
     {
-        return 'Aktif';
+        return match ($this->status) {
+            self::STATUS_MAINTENANCE => 'Maintenance',
+            self::STATUS_INACTIVE => 'Tidak Aktif',
+            default => 'Aktif',
+        };
     }
 }

@@ -15,6 +15,7 @@ const statusFilters = [
   { value: '', label: 'Semua' },
   { value: 'pending', label: 'Menunggu' },
   { value: 'approved', label: 'Disetujui' },
+  { value: 'completed', label: 'Selesai' },
   { value: 'rejected', label: 'Ditolak' },
   { value: 'cancelled', label: 'Dibatalkan' },
 ]
@@ -118,13 +119,13 @@ export default function Bookings() {
   }
 
   const approve = (b) =>
-    act(() => client.post(`/bookings/${b.id}/approve`), `Booking ${b.lab_name} disetujui.`, b.id)
+    act(() => client.post(`/bookings/${b.id}/approve`), `Borrowing ${b.lab_name} disetujui.`, b.id)
 
   const submitReject = (e) => {
     e.preventDefault()
     act(
       () => client.post(`/bookings/${rejectTarget.id}/reject`, { reason }),
-      `Booking ${rejectTarget.lab_name} ditolak.`,
+      `Borrowing ${rejectTarget.lab_name} ditolak.`,
       rejectTarget.id,
     )
   }
@@ -132,7 +133,7 @@ export default function Bookings() {
   const cancelBooking = (b) =>
     act(
       () => client.post(`/bookings/${b.id}/cancel`),
-      'Booking berhasil dibatalkan.',
+      'Borrowing berhasil dibatalkan.',
       b.id,
     )
 
@@ -141,12 +142,12 @@ export default function Bookings() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-800">
-            {isApprover ? 'Semua Booking' : 'Booking Saya'}
+            {isApprover ? 'Semua Borrowing' : 'Borrowing Saya'}
           </h1>
           <p className="text-sm text-slate-500">
             {isApprover
               ? 'Pantau dan kelola seluruh jadwal penggunaan lab'
-              : 'Riwayat booking lab Anda'}
+              : 'Riwayat Borrowing Lab Anda'}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -164,8 +165,8 @@ export default function Bookings() {
           )}
           <Link to="/booking/new" className="btn-primary">
             <IconPlus className="h-4 w-4" />
-            <span className="hidden sm:inline">Booking Lab</span>
-            <span className="sm:hidden">Booking</span>
+            <span className="hidden sm:inline">Borrowing Lab</span>
+            <span className="sm:hidden">Borrowing</span>
           </Link>
         </div>
       </div>
@@ -253,12 +254,12 @@ export default function Bookings() {
         ) : bookings.length === 0 ? (
           <EmptyState
             icon={IconCalendar}
-            title="Tidak ada booking"
-            description="Belum ada data booking untuk filter ini."
+            title="Tidak ada borrowing"
+            description="Belum ada data borrowing untuk filter ini."
             action={
               <Link to="/booking/new" className="btn-primary">
                 <IconPlus className="h-4 w-4" />
-                Booking Lab
+                Borrowing Lab
               </Link>
             }
           />
@@ -336,7 +337,7 @@ export default function Bookings() {
                                 onClick={() => cancelBooking(b)}
                                 disabled={processing}
                                 className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
-                                title="Batalkan booking"
+                                title="Batalkan borrowing"
                               >
                                 <IconTrash className="h-4 w-4" />
                               </button>
@@ -406,7 +407,7 @@ export default function Bookings() {
                             onClick={(e) => { e.stopPropagation(); cancelBooking(b) }}
                             disabled={processing}
                             className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
-                            title="Batalkan booking"
+                            title="Batalkan borrowing"
                           >
                             <IconTrash className="h-4 w-4" />
                           </button>
@@ -422,16 +423,16 @@ export default function Bookings() {
       </div>
 
       {/* Modal detail booking */}
-      <Modal open={!!detailTarget} onClose={() => setDetailTarget(null)} title="Detail Booking">
+      <Modal open={!!detailTarget} onClose={() => setDetailTarget(null)} title="Detail Borrowing">
         {detailTarget && <BookingDetail booking={detailTarget} />}
       </Modal>
 
       {/* Modal alasan penolakan */}
-      <Modal open={!!rejectTarget} onClose={() => setRejectTarget(null)} title="Tolak Booking">
+      <Modal open={!!rejectTarget} onClose={() => setRejectTarget(null)} title="Tolak Borrowing">
         {rejectTarget && (
           <form onSubmit={submitReject} className="space-y-4">
             <p className="text-sm text-slate-500">
-              Anda akan menolak booking <span className="font-semibold text-slate-700">{rejectTarget.lab_name}</span>{' '}
+              Anda akan menolak borrowing <span className="font-semibold text-slate-700">{rejectTarget.lab_name}</span>{' '}
               pada {rejectTarget.date} ({rejectTarget.start_time}–{rejectTarget.end_time}).
             </p>
             <div>
@@ -452,7 +453,7 @@ export default function Bookings() {
                 Batal
               </button>
               <button type="submit" disabled={processing || !reason.trim()} className="btn-danger">
-                {processing ? 'Memproses...' : 'Tolak Booking'}
+                {processing ? 'Memproses...' : 'Tolak Borrowing'}
               </button>
             </div>
           </form>

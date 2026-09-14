@@ -29,7 +29,7 @@ export default function GuruDashboard({ data = {}, refresh }) {
     setProcessing(true)
     try {
       await client.post(`/bookings/${b.id}/approve`)
-      toast(`Booking ${b.lab_name} disetujui.`)
+      toast(`Borrowing ${b.lab_name} disetujui.`)
       refresh()
     } catch (err) {
       toast(extractError(err), 'error')
@@ -43,7 +43,7 @@ export default function GuruDashboard({ data = {}, refresh }) {
     setProcessing(true)
     try {
       await client.post(`/bookings/${rejectTarget.id}/reject`, { reason })
-      toast(`Booking ${rejectTarget.lab_name} ditolak.`)
+      toast(`Borrowing ${rejectTarget.lab_name} ditolak.`)
       setRejectTarget(null)
       setReason('')
       refresh()
@@ -84,11 +84,11 @@ export default function GuruDashboard({ data = {}, refresh }) {
           label="Ditolak"
           value={stats.rejected}
           accent="rose"
-          sub="Booking tertolak"
+          sub="Borrowing tertolak"
         />
         <StatCard
           icon={IconCalendar}
-          label="Total Booking"
+          label="Total Borrowing"
           value={stats.total_bookings}
           accent="sky"
           sub="Semua status"
@@ -118,11 +118,11 @@ export default function GuruDashboard({ data = {}, refresh }) {
       </div>
 
       {/* Modal alasan penolakan */}
-      <Modal open={!!rejectTarget} onClose={() => setRejectTarget(null)} title="Tolak Booking">
+      <Modal open={!!rejectTarget} onClose={() => setRejectTarget(null)} title="Tolak Borrowing">
         {rejectTarget && (
           <form onSubmit={submitReject} className="space-y-4">
             <p className="text-sm text-slate-500">
-              Anda akan menolak booking{' '}
+              Anda akan menolak borrowing{' '}
               <span className="font-semibold text-slate-700">{rejectTarget.lab_name}</span> oleh{' '}
               <span className="font-semibold text-slate-700">{rejectTarget.user_name}</span> pada{' '}
               {rejectTarget.date} ({rejectTarget.start_time}–{rejectTarget.end_time}).
@@ -135,7 +135,7 @@ export default function GuruDashboard({ data = {}, refresh }) {
                 id="gd-reason"
                 rows="3"
                 className="input"
-                placeholder="Alasan ditolak akan dicatat pada riwayat booking..."
+                placeholder="Alasan ditolak akan dicatat pada riwayat borrowing..."
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
               />
@@ -145,7 +145,7 @@ export default function GuruDashboard({ data = {}, refresh }) {
                 Batal
               </button>
               <button type="submit" disabled={processing || !reason.trim()} className="btn-danger">
-                {processing ? 'Memproses...' : 'Tolak Booking'}
+                {processing ? 'Memproses...' : 'Tolak Borrowing'}
               </button>
             </div>
           </form>

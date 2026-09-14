@@ -8,16 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
-            $table->string('purpose')->nullable()->after('end_time');
-            $table->unsignedInteger('participant_count')->default(0)->after('purpose');
-        });
+        //
     }
 
     public function down(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
-            $table->dropColumn(['purpose', 'participant_count']);
-        });
+        //
     }
 };
