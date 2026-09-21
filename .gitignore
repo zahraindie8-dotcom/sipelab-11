@@ -25,3 +25,35 @@ backend/vendor/
 # PHP
 backend/.phpunit.result.cache
 backend/.phpunit.cache
+# Local backups and temporary files
+*.backup
+*.backup-*
+.env.local-backup
+artisan-error.txt
+*-test-output.txt
+backup.sh
+deploy-security-upgrade.sh
+log-rotation.sh
+security-monitor.sh
+setup-crons.sh
+setup-ssl.sh
+extract-*.php
+test.php
+ziptest.php
+*.zip
+# Local deployment folders
+/deploy-backend/
+/deploy-frontend/
+/hosting/
+# Local documentation / deployment artifacts
+/docs/
+# Frontend local test artifacts
+/frontend/responsive-screenshots/
+/frontend/test-responsive*.mjs
+/frontend/src/pages/LandingPage.backup.jsx
+# Local backup database and temporary files
+*.sql
+index.php.txt
+frontend/responsive-screenshots*.png
+# Accidental local file
+-files --others --exclude-standard
